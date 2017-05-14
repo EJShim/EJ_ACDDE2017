@@ -1,0 +1,24 @@
+\setlength{\textwidth}{16cm}
+\setlength{\oddsidemargin}{0cm}
+\setlength{\textheight}{24.5cm}
+\setlength{\topmargin}{-1.5cm}
+\setlength{\columnsep}{0.7cm}
+
+\long\def\@makecaption#1#2{%
+  \vskip\abovecaptionskip
+  \sbox\@tempboxa{#1. #2}%
+  \ifdim \wd\@tempboxa >\hsize
+    #1. #2\par
+  \else
+    \global \@minipagefalse
+    \hb@xt@\hsize{\hfil\box\@tempboxa\hfil}%
+  \fi
+  \vskip\belowcaptionskip}
+
+\def\@begintheorem#1#2{\trivlist 
+   \item[\hskip \labelsep{\bfseries #1\ #2.}]\itshape}
+\def\@opargbegintheorem#1#2#3{\trivlist
+      \item[\hskip \labelsep{\bfseries #1\ #2\ (#3).}]\itshape}
+\def\@endtheorem{\endtrivlist}
+
+\def\@seccntformat#1{\csname the#1\endcsname.\ \ }

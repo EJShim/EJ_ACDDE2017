@@ -1,0 +1,139 @@
+% The following is for LaTeX2e.
+\documentclass[10pt]{article}
+\usepackage{samplesty} % Includes the sample style file
+\usepackage{epsfig}
+
+% The following is for LaTeX 2.09.
+% \documentstyle[11pt,twocolumn,samplesty,epsfig]{article}
+
+\begin{document}
+
+\title{2D-3D Registration using deep reinforcement learning(ACDDE 2017)}
+
+\author{Kildong Hong\thanks{Corresponding author email: kdhong@university.ac.kr}, Choonhyang Sung
+\\ Department of Industrial Engineering, University, Seoul, Korea
+\and Kokichi Sugihara\\ Department of Mathematical Engineering and Information Physics, University, Tokyo, Japan
+\and Cao Cao\\ Department of Design, University, Beijing, China}
+
+
+%
+
+
+
+\date{}
+\maketitle
+
+\begin{abstract}
+This file is the template for the Asian Conference on Design and Digital Engineering (ACDDE 2017). Authors who want to submit papers should follow the format presented in this file.
+
+\vspace*{5mm}
+\noindent
+{\bf Key words:}  computational geometry, Voronoi diagrams,
+geometric modeling
+\end{abstract}
+
+\section{Introduction}
+This file describes the template of Asian Conference on Design and Digital Engineering (ACDDE 2017). Authors who want to submit a paper should follow the format presented in this file.\\
+This is the beginning of Section 1. The official language of papers in this journal is English and there is no exception for this requirement.
+
+
+\section{Equations} %2
+Equations may be included within a line of text as $O(n \log ^2 n)$
+and $O(nc^{\sqrt{\log n}})$, or they may appear in a separate line as
+\begin{equation}
+y = f(x).
+\end{equation}
+In the case that an equation appears in a separate line,
+the equation should have an equation number in an increasing order.
+
+
+\section{Figures}
+There could be a number of figures, which are possibly in color, in the paper. The figures should be located at an appropriate place in the middle of the paper as the readers may feel convenient. The figures should not be located at the end of the paper. An example of figure is the following as shown in Fig. ~\ref{fig1}. Each figure should have an appropriate caption at the bottom of the figure and also be numbered in an increasing order with Arabic numerals
+
+\begin{figure}[htb]
+\begin{center}
+\includegraphics[width=0.6\columnwidth]{fig1.eps}\\
+(a) \hspace{2cm} (b)\hspace{2cm} (c)
+\caption{Circumcircles. (a) no circumcircle exists, (b) one
+circumcircle exists, and (c) two circumcircles exist.}
+\label{fig1}
+\end{center}
+\end{figure}
+
+\section{Tables}
+Tables, if any, should be also located at the appropriate places in the middle of the paper. The place can be decided by the author based on the convenience of readers. The tables should be also numbered in Arabic numerals with appropriate captions.
+\begin{table}[htbp]
+\begin{center}
+\caption{An example of table.}
+\vspace{2mm}
+\label{tab1}
+\begin{tabular}{ccc}
+\hline
+A & B & C \\
+\hline
+Aa & 1 & 3 \\
+Bb & 2 & 12 \\
+Cc & 4 & 5 \\
+\hline
+total & 7 & 20\\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+
+\section{References}
+The detail information of the references, which are appropriately
+quoted in the paper, should be provided in References section. The
+unquoted references should not be included in the References
+section. The list in the section should be numbered in the alphabetic order
+of the names of the authors as shown in the examples in References
+section of this template. If a paper published in a regular journal is quoted, it should be
+listed in the References section as shown in the examples
+of~\cite{ref1,ref4}. If a book is quoted in the paper, it must be
+listed as shown in~\cite{ref2,ref3}. If a web-site is referred,
+the URL should be followed by the date that the site is most
+recently checked by the author(s). The example is shown
+in~\cite{ref5}. An example for a cited paper from a conference
+proceedings is shown in~\cite{ref6}.
+example \cite{refefe}
+
+
+\section*{Acknowledgement}
+Authors may express their gratitude in Acknowledgement section, if
+they want.
+
+
+\bibliographystyle{elsarticle-num}
+\bibliography{references}
+
+%
+% \begin{thebibliography}{9}
+% \bibitem{ref1}
+% S.~Fortune, A sweepline algorithm for Voronoi diagrams,
+% {\it Algorithmica} {\bf 2} (1987), pp.153--174.
+%
+% \bibitem{ref2}
+% G.~Farin, {\it Curves and Surfaces for Computer Aided Geometric
+% Design: A Practical Guide}, Academic Press, San Diego, 1988.
+%
+% \bibitem{ref3}
+% A. Okabe, B. Boots, K. Sugihara, and S.N. Chiu,
+% {\it Spatial Tessellations: Concepts and Applications of
+% Voronoi Diagrams}, 2nd Edition, John Wiles \& Sons, Chichester, 2000.
+%
+% \bibitem{ref4}
+% T. Pavlidis, Curve fitting with conic splines,
+% {\it ACM Transactions on Graphics} {\bf 19} (1983), pp. 151--159.
+%
+% \bibitem{ref5}
+% K. Sugihara's Homepage,
+% \texttt{http://www.simplex.t.u-tokyo.ac.jp/\~{}sugihara/}, 2005.
+%
+% \bibitem{ref6}
+% G. Taubin, A signal processing approach to fair surface design,
+% in {\it Proc. of SIGGRAPH} (1995), pp. 351--358.
+%
+% \end{thebibliography}
+
+\end{document}
