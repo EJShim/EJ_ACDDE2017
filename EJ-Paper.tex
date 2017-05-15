@@ -8,28 +8,24 @@
 
 \begin{document}
 
-\title{2D-3D Registration using deep reinforcement learning(ACDDE 2017)}
+\title{An approach to 2D/3D registration using deep reinforcemenr learning \\(ACDDE 2017)}
 
-\author{Kildong Hong\thanks{Corresponding author email: kdhong@university.ac.kr}, Choonhyang Sung
-\\ Department of Industrial Engineering, University, Seoul, Korea
-\and Kokichi Sugihara\\ Department of Mathematical Engineering and Information Physics, University, Tokyo, Japan
-\and Cao Cao\\ Department of Design, University, Beijing, China}
+\author{Eungjune Shim \\ UST, Center for Bionics, Korea Institute of Science and Technology, Seoul, Korea
+\and Youngjun Kim\thanks{Corresponding author email: junekim@kist.re.kr},
+\\ Center for Bionics, Korea Institute of Science and Technology, Seoul, Korea}
 
 
 %
 
-
-
-\date{}
+\date{2017-05}
 \maketitle
 
 \begin{abstract}
-This file is the template for the Asian Conference on Design and Digital Engineering (ACDDE 2017). Authors who want to submit papers should follow the format presented in this file.
+ Deep Q Learning method is a novel approach to approximate value functions of reinforcement learning. This has been successfully applied to solve problems such as robot control, elevator scheduling, telecommunication networks. We applied this method to control a simple image-based visual servoing simulator. The simulator environment has been virtually organized in three-dimensional space, with four target points. The purpose of this simulator is to reduce two-dimensional error between projected target points and pre-defined four ground truth vectors. Our deep neural network takes eight digits as input values, and predict the possibilities of six outputs. Each outputs mean actions for camera to move forward, backward, top, bottom, right, left. For each steps, the neural network predict actions, and gets state rewards according to error vector. Our method made the simulator to decide actions from each states, and find its optimal transformation. Compare to conventional method, our method still need to areas to improve, but it has a lot of possibility to develope. Firstly, there are many neural networks proposed and deviced to deal with images, such as Convolutional Neural Network(CNN), we can simply replace our network that can take the whole projected camera images, not eight-digit 2D point error vectors. Secondly, we can also optimize the transform vector and range to speed up, by combine all actions' predicted possibilities, or just simply put more varoius actions. 
 
 \vspace*{5mm}
 \noindent
-{\bf Key words:}  computational geometry, Voronoi diagrams,
-geometric modeling
+{\bf Key words:}  Deep Q Learning, Reinforcement Learning, 2D-3D Registration, Visual Servoing
 \end{abstract}
 
 \section{Introduction}
