@@ -3,14 +3,25 @@
 \usepackage{samplesty} % Includes the sample style file
 \usepackage{epsfig}
 
+% For algorithm elements
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+
+%For Neural Network Diagram
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+
+
 % The following is for LaTeX 2.09.
 % \documentstyle[11pt,twocolumn,samplesty,epsfig]{article}
 
 \begin{document}
 
-\title{An approach to 2D/3D registration using deep reinforcemenr learning \\(ACDDE 2017)}
+\title{An approach to 2D/3D registration using deep reinforcement learning \\(ACDDE 2017)}
 
-\author{Eungjune Shim \\ UST, Center for Bionics, Korea Institute of Science and Technology, Seoul, Korea
+\author{Eungjune Shim, \\
+Center for Bionics, Korea Institute of Science and Technology, \\
+Department of Biomedical Engineering, University of Science and Technology, Seoul, Korea
 \and Youngjun Kim\thanks{Corresponding author email: junekim@kist.re.kr},
 \\ Center for Bionics, Korea Institute of Science and Technology, Seoul, Korea}
 
@@ -21,7 +32,7 @@
 \maketitle
 
 \begin{abstract}
- Deep Q Learning method is a novel approach to approximate value functions of reinforcement learning. This has been successfully applied to solve problems such as robot control, elevator scheduling, telecommunication networks. We applied this method to control a simple image-based visual servoing simulator. The simulator environment has been virtually organized in three-dimensional space, with four target points. The purpose of this simulator is to reduce two-dimensional error between projected target points and pre-defined four ground truth vectors. Our deep neural network takes eight digits as input values, and predict the possibilities of six outputs. Each outputs mean actions for camera to move forward, backward, top, bottom, right, left. For each steps, the neural network predict actions, and gets state rewards according to error vector. Our method made the simulator to decide actions from each states, and find its optimal transformation. Compare to conventional method, our method still need to areas to improve, but it has a lot of possibility to develope. Firstly, there are many neural networks proposed and deviced to deal with images, such as Convolutional Neural Network(CNN), we can simply replace our network that can take the whole projected camera images, not eight-digit 2D point error vectors. Secondly, we can also optimize the transform vector and range to speed up, by combine all actions' predicted possibilities, or just simply put more varoius actions. 
+ Deep Q Learning method is a novel approach to approximate value functions of reinforcement learning. This has been successfully applied to solve problems such as robot control, elevator scheduling, telecommunication networks. We applied this method to control a simple point-based visual servoing simulator. The simulator environment has been virtually organized in three-dimensional space: Each four three-dimensional target point vectors and two-dimensional correct point vector, and a virtual camera are defined. As the camera moves, the 3D target points are projected onto the viewport. The purpose of this simulator is to reduce 2D vector error between target and correct point vectors. For each steps, the neural network takes current state and decide a action for camera to move. There are six possible actions: camera moves forward, backward, top, bottom, right, left. The state is defined as four 2D error vectors, and the network gets reward when the output action reduces the error. As learning processes, the network moves camera with higher possibility of reducing errors. When using well-trained network, there are several benefits compare to conventional methods, such as random searching algorithms. For example, the computation time is much less. Since this method used too much simplified registration environment and camera actions, the performance looks a little bit awkward, but there still are a lot to improve from this approach. Firstly, we can define each step's state with much more complex and sophisticated form by replacing the neural network. There are many Convolutional Neural Networks(CNNs) proposed and deviced to deal with 2D images, the state can be defined simply using virtual camera's rendered image, not eight-digit 2D point error vectors. Secondly, the camera actions can be more natural and efficient by using the whole output possibility of the network. As our proposed method shows considerable benefit over the conventional method, the future work from this approach can be expected to be applicable to real 2D-3D registration works.
 
 \vspace*{5mm}
 \noindent
@@ -29,75 +40,171 @@
 \end{abstract}
 
 \section{Introduction}
-This file describes the template of Asian Conference on Design and Digital Engineering (ACDDE 2017). Authors who want to submit a paper should follow the format presented in this file.\\
-This is the beginning of Section 1. The official language of papers in this journal is English and there is no exception for this requirement.
+
+ Deep Q Learning(DQN) method is a novel approach that has been successfully applied to solve problems such as robot control, elevator scheduling, telecomunication networks.
+
+ (Some Related Works)
+
+ We applied this method in a simple point-based virtual visual servoing simulator.
+
+ In the simulator, we use four 2D vector errors to find 3D camera transformation, This is a basic concept of 2D-3D registration, so this approach shows possibility to extend solving 2D-3D registration problems using DQN.
 
 
-\section{Equations} %2
-Equations may be included within a line of text as $O(n \log ^2 n)$
-and $O(nc^{\sqrt{\log n}})$, or they may appear in a separate line as
-\begin{equation}
-y = f(x).
-\end{equation}
-In the case that an equation appears in a separate line,
-the equation should have an equation number in an increasing order.
-
-
-\section{Figures}
-There could be a number of figures, which are possibly in color, in the paper. The figures should be located at an appropriate place in the middle of the paper as the readers may feel convenient. The figures should not be located at the end of the paper. An example of figure is the following as shown in Fig. ~\ref{fig1}. Each figure should have an appropriate caption at the bottom of the figure and also be numbered in an increasing order with Arabic numerals
+\section{Methods}
+Virtual point-based servoing simulator is composed of a camera and a plane that has four circles on it in a virtual 3D space. The plane normal and the camera view vectors are parallel to world coordinate's Y-axis. Especially in this simulator, the camera can only move forward, backward, up, down, right and left, and no rotations are possible. Normally in visual servoing, four point features are extracted from the rendered image by using image processing algorithms. Since our purpose is to test our DQN-based 2D-3D registration algorithm, we decided to skip this process. Instead of that, we pre-defined the 3D positions of four feature points, extract to the 2D rendering viewport by unproject them. This has the same effect as feature detection. This simulator runs on web browser, used javascript-based \emph{WebGL} library named \emph{Three.js}.
 
 \begin{figure}[htb]
 \begin{center}
-\includegraphics[width=0.6\columnwidth]{fig1.eps}\\
-(a) \hspace{2cm} (b)\hspace{2cm} (c)
-\caption{Circumcircles. (a) no circumcircle exists, (b) one
-circumcircle exists, and (c) two circumcircles exist.}
+\includegraphics[width=0.8\columnwidth]{images/fig-temp1.png}
+\caption{3D Servoing Environment, renderer image(left), and 3D objects(right)}
 \label{fig1}
 \end{center}
 \end{figure}
 
-\section{Tables}
-Tables, if any, should be also located at the appropriate places in the middle of the paper. The place can be decided by the author based on the convenience of readers. The tables should be also numbered in Arabic numerals with appropriate captions.
-\begin{table}[htbp]
+The network is trained with a variant of the Q-learning\cite{ref1} algorithm, under the same condition as \cite{ref2}, with stochastic gradient descent to update the weights and experience replay mechanism; tasks consist of an agent, time $t$, states$s_t$, environment $\varepsilon$, actions $a_t$,  sequences of actions$S_t$, and rewards $r_t$. a  In our proposed method, we simply set the state as four error vectors of 2D target points and corresponding ground-truth points. If the total amount of the error is decreased in $x_{t+1}$, the agent gets reward of value $1.0$, and if the error is increased, the reward is $-1.0$. The experience size of sequence is set to $30000$, and the $a$ are consist of six actions: forward, backward, up, down, right, left. For each actions, all the distance the camera move is $1$. The agent interacts with the simulator by selecting actions in a way that maximises future rewards. The neural network inside the agent is composed of a simple four-layered neural network composed of input layer, two fully-connected layers with 50 neurons, and regression output layer Fig. ~\ref{fig2}.
+
+\begin{equation}\label{environment}
+  \varepsilon = {x_1, x_2, ... x_t}
+\end{equation}
+
+\begin{equation}\label{sequences}
+  S = {x_1, a_1, x_2, ..., a_{t-1}, x_t, a_t}
+\end{equation}
+
+\begin{equation}\label{actions}
+  a = {a_{Forward}, a_{Backward}, a_{Up}, a_{Down}, a_{Right}, a_{Left}}
+\end{equation}
+
+
+\tikzset{%
+  every neuron/.style={
+    circle,
+    draw,
+    minimum size=1cm
+  },
+  neuron missing/.style={
+    draw=none,
+    scale=4,
+    text height=0.333cm,
+    execute at begin node=\color{black}$\vdots$
+  },
+}
+\begin{figure}[htb]
 \begin{center}
-\caption{An example of table.}
-\vspace{2mm}
-\label{tab1}
-\begin{tabular}{ccc}
-\hline
-A & B & C \\
-\hline
-Aa & 1 & 3 \\
-Bb & 2 & 12 \\
-Cc & 4 & 5 \\
-\hline
-total & 7 & 20\\
-\hline
-\end{tabular}
+  \begin{tikzpicture}[x=1.5cm, y=1.5cm, >=stealth]
+
+  \foreach \m/\l [count=\y] in {1,2,3,missing,4}
+    \node [every neuron/.try, neuron \m/.try] (input-\m) at (0,2.5-\y) {};
+
+  \foreach \m [count=\y] in {1,missing,2}
+    \node [every neuron/.try, neuron \m/.try ] (hidden-\m) at (2,2-\y*1.25) {};
+
+  \foreach \m [count=\y] in {1,missing,2}
+    \node [every neuron/.try, neuron \m/.try ] (hidden2-\m) at (4,2-\y*1.25) {};
+
+  \foreach \m [count=\y] in {1,missing,2}
+    \node [every neuron/.try, neuron \m/.try ] (output-\m) at (6,2-\y*1.25) {};
+
+  \foreach \l [count=\i] in {1,2,3,n}
+    \draw [<-] (input-\i) -- ++(-1,0)
+      node [above, midway] {$I_\l$};
+
+  \foreach \l [count=\i] in {1,n}
+    \node [above] at (hidden-\i.north) {$H_\l$};
+
+  \foreach \l [count=\i] in {1,n}
+    \draw [->] (output-\i) -- ++(1,0)
+      node [above, midway] {$O_\l$};
+
+  \foreach \i in {1,...,4}
+    \foreach \j in {1,...,2}
+      \draw [->] (input-\i) -- (hidden-\j);
+
+  \foreach \i in {1,...,2}
+    \foreach \j in {1,...,2}
+      \draw [->] (hidden-\i) -- (hidden2-\j);
+
+  \foreach \i in {1,...,2}
+    \foreach \j in {1,...,2}
+      \draw [->] (hidden2-\i) -- (output-\j);
+
+  \foreach \l [count=\x from 0] in {Input, Hidden, Hidden2, Ouput}
+    \node [align=center, above] at (\x*2,2) {\l \\ layer};
+
+  \end{tikzpicture}
+\caption{Neural Network Inside the agent}
+\label{fig2}
 \end{center}
-\end{table}
+\end{figure}
 
 
-\section{References}
-The detail information of the references, which are appropriately
-quoted in the paper, should be provided in References section. The
-unquoted references should not be included in the References
-section. The list in the section should be numbered in the alphabetic order
-of the names of the authors as shown in the examples in References
-section of this template. If a paper published in a regular journal is quoted, it should be
-listed in the References section as shown in the examples
-of~\cite{ref1,ref4}. If a book is quoted in the paper, it must be
-listed as shown in~\cite{ref2,ref3}. If a web-site is referred,
-the URL should be followed by the date that the site is most
-recently checked by the author(s). The example is shown
-in~\cite{ref5}. An example for a cited paper from a conference
-proceedings is shown in~\cite{ref6}.
-example \cite{refefe}
+The training process starts after first $100$ steps of random actions. Basically, the position of camera is randomly set where all four target feature points are visible. If the amount of error value of current state $x_t$ is less than $10.0$ the camera is repositioned to a random position. The agent takes input state $x_t$ and forward network, it returns a index of action that has maximum possibioity of network output. The camera carry out action which agent picked, calculate $x_{t+1}$, and reward. The agent takes reward and update the weights
+
+ \begin{algorithm}
+   \caption{DQN training process for point-based visual servoing}\label{euclid}
+   \begin{algorithmic}[1]
+
+     \State camera.RandomPosition()
+
+
+     \For {$t$ in $T$}
+
+     \State $a_t$ = brain.Forward($x_t$)
+     \State camera.GoTo($a_t$)
+     \State $E$ = Error($x_{t+1}$) - Error($x_t$)
+     \If {E $\geq$ 0}
+     \State $r_t$ = $1.0$
+     \Else
+     \State $r_t$ = -$1.0$
+     \EndIf
+
+     brain.Backward($r_t$)
+     \If{$r_t$ $leq$ 10.0}
+     camera.RandomPosition()
+     \EndIf
+
+     \EndFor
+
+   \end{algorithmic}
+ \end{algorithm}
+
+
+\section{Results}
+(Some Pictures)
+
+(Graph during training)
+
+
+
+\section{Discussion}
+ Our proposed DQN model trained using each timestep's 2D feature errors, decided correct action for servoing virtual camera in 3D space. After approximately ???? steps with 64 batchs, and ?????? games with 10 batchs, the average loss and servoing time were oscillated without increasing or decreasing. From this timestep point on, we could regard that our model is well-trained and no further training is meaningless. Our well-trained model can conduct registration from a random position to the optimal position within average of ??? seconds. The visualized camera moved smoothly with almost no unnecessary movement. Compare to conventional method, such as tree searching algorithm or solving jacobi matrices, our proposed method has several benefits. First, the amount of calculation is greatly reduced. conventional method requires large amount of computations. For example, jacobi matrix calculation method needs to calculate inverse or pseudoinverse matrix in each timestep. Random searching method also requires additional calculation: feature error variation, and shows too much unnecessary movement of camera. DQN method requires such calculation only when it is being trained. Once training task is done, this does not require complex computation, and shows efficient servoing movement.
+
+ For now, there are several limitations that need to be improved. First, the camera movement has restrictions compare to the jacobi matrix method. The jacobi matrix calculation method results all-round 3D translation and rotation vector; In our current condition, the movement could only be one of six normalized direction vectors, and no rotations. Under this condition the camera movements looks a little awkward showing staircase. Since all the distance the camera move is $1$, it is also inefficient in terms of utilization of error sizes. Second, states $x_t$ is too simple to apply to 2D-3D registrations. Our current method defined $x_t$ as four 2D point vector errors, but real 2D-3D registration, larger and much more complex features need to be used to define current state.
+
+ Those limitations can be possibly overcome in the future works. As for the camera movement problem, we are planning three step-by-step solutions: adding rotation action, combining all predcted result actions, and Diversification of rewards according to the error size variant between steps. The neural network results every actions' possibilities that could maximize future reward. Our current method only choose a single action that has maximum possibility, but we can combine all actions and possibilities to calculate camera transformation. For example, in 2D translation case with four actions(up, down, right left), if the score of action $(1.0)$ is 
+
+
+But in the future, this can possibily be overcome.
+firstly, camera movement can be simply more natural and sophisticated, by using the whole network output and possibilities.
+Rotation can be also added and perform similarily.
+
+secondly, Input state can be defined by using whole rendered image of camera. There are lot of image-handling deep neural networks proposed, we can simply replace our network to one of them.
+
+
+
+\section{Conclusion}
+
+We have developed visual servoing simulator using deep Q learning method.
+
+Although there are several limitations for now, there are possible future work can overcome them.
+
+Our visual servoing simulator takes 2D feature point vector errors, and decide camera how to move in 3D space.
+
+This future work can be integrated in near future, and this can perform as 2D-3D registration simulator
 
 
 \section*{Acknowledgement}
-Authors may express their gratitude in Acknowledgement section, if
-they want.
+This research was supported by the KIST institutional program (??????, ???????).
 
 
 \bibliographystyle{elsarticle-num}
