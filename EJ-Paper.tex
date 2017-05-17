@@ -61,7 +61,7 @@ Virtual point-based servoing simulator is composed of a camera and a plane conta
 \end{center}
 \end{figure}
 
-DQN training is based on Q-learning\cite{ref1} algorithm, using Q-network for approximating Q-table. Experience replay and target Q are also applied to our method to prevent divergence and  stablize the process. For every timestep $t$, environment $\varepsilon$, composed of states$s_t$ actions $a_t$, and rewards $r_t$ are defined. The agent of DQN has Q-network $Q(s, a) -> r$, predicts rewards of each action values, so user-defined reward can backpropagate and update weight inside the network\cite{ref2}. In our proposed method, we simply set the state as four error vectors of 2D target points and corresponding ground-truth points. If the total amount of the error is decreased in $x_{t+1}$, the agent gets reward of value $1.0$, and if the error is increased, the reward is $-1.0$. The total experience size of sequence is set to $30000$, and the $a$ are consist of six actions as mentioned: forward, backward, up, down, right, left. For each actions, all the distance the camera move is $1$. The agent interacts with the simulator by selecting actions in a way that maximises future rewards. The neural network inside the agent is composed of a simple four-layered neural network composed of input layer, two fully-connected layers with 50 neurons, and regression output layer Fig. ~\ref{fig2}.
+DQN training is based on Q-learning\cite{ref1} algorithm, using Q-network for approximating Q-table. Experience replay and target $Q$ are also applied to our method to prevent divergence and  stablize the process. For every timestep $t$, environment $\varepsilon$, composed of states$s_t$ actions $a_t$, and rewards $r_t$ are defined. The agent of DQN has Q-network $Q(s, a) \Rightarrow r$, predicts rewards of each action values, so user-defined reward can backpropagate and update weight inside the network\cite{ref2}. In our proposed method, we simply set the state as four error vectors of 2D target points and corresponding ground-truth points. The reward is given according to the variance of error vector size. If the total amount of the error is decreased in $x_{t+1}$, the agent receives reward of value $1.0$, and if the error is increased, the reward is $-1.0$. The total experience size of sequence is set to $30000$ and the training task proceeds when $size(\epsilon) \geq 100$. The action $a$ are consist of six actions as mentioned: forward, backward, up, down, right, left. For each actions, all the distance the camera move is set to $1$. The agent interacts with the simulator by selecting actions in a way that maximises future rewards. The Q-network is composed of a simple four-layered neural network: input layer, two fully-connected layers with 50 neurons, and regression output layer Fig. ~\ref{fig2}.
 
 \begin{equation}\label{actions}
   a = {a_{Forward}, a_{Backward}, a_{Up}, a_{Down}, a_{Right}, a_{Left}}
@@ -85,46 +85,61 @@ DQN training is based on Q-learning\cite{ref1} algorithm, using Q-network for ap
 \begin{center}
   \begin{tikzpicture}[x=1.5cm, y=1.5cm, >=stealth]
 
-  \foreach \m/\l [count=\y] in {1,2,3,missing,4}
-    \node [every neuron/.try, neuron \m/.try] (input-\m) at (0,2.5-\y) {};
+ \def\layersep{2.5}
+ %Input Layer
+  \foreach \m/\l [count=\y] in {1,2,missing,3,4,missing,5,6}
+    \node [every neuron/.try, neuron \m/.try] (input-\m) at (0*\layersep,2.5-\y) {};
 
-  \foreach \m [count=\y] in {1,missing,2}
-    \node [every neuron/.try, neuron \m/.try ] (hidden-\m) at (2,2-\y*1.25) {};
+%Hidden Layer 1
+  \foreach \m [count=\y] in {1,2,missing,3,4}
+    \node [every neuron/.try, neuron \m/.try ] (hidden-\m) at (1*\layersep,2-\y*1.25) {};
 
-  \foreach \m [count=\y] in {1,missing,2}
-    \node [every neuron/.try, neuron \m/.try ] (hidden2-\m) at (4,2-\y*1.25) {};
+%Hidden Layer 2
+  \foreach \m [count=\y] in {1,2,missing,3,4}
+    \node [every neuron/.try, neuron \m/.try ] (hidden2-\m) at (2*\layersep,2-\y*1.25) {};
+%Hidden Layer 1
+  \foreach \m [count=\y] in {1,...,6}
+    \node [every neuron/.try, neuron \m/.try ] (output-\m) at (3*\layersep,2.5-\y*1.3) {};
 
-  \foreach \m [count=\y] in {1,missing,2}
-    \node [every neuron/.try, neuron \m/.try ] (output-\m) at (6,2-\y*1.25) {};
 
-  \foreach \l [count=\i] in {1,2,3,n}
+
+  \foreach \l [count=\i] in {1,2,8}
     \draw [<-] (input-\i) -- ++(-1,0)
-      node [above, midway] {$I_\l$};
+      node [above, midway] {$x_{\l}$};
 
-  \foreach \l [count=\i] in {1,n}
-    \node [above] at (hidden-\i.north) {$H_\l$};
+  \foreach \l [count=\i] in {9,13,14}
+    \draw [<-] (input-\i) -- ++(-1,0)
+      node [above, midway] {$a_{\l}$};
 
-  \foreach \l [count=\i] in {1,n}
+  \foreach \l [count=\i] in {1,2,49,50}
+    \node [above] at (hidden-\i.north) {$W_{\l}$};
+
+  \foreach \l [count=\i] in {1,2,49,50}
+    \node [above] at (hidden2-\i.north) {$W_{\l}$};
+
+
+  %Append Edge
+  \foreach \l [count=\i] in {1,...,6}
     \draw [->] (output-\i) -- ++(1,0)
-      node [above, midway] {$O_\l$};
+      node [above, midway] {$r_{\l}$};
 
-  \foreach \i in {1,...,4}
-    \foreach \j in {1,...,2}
+  \foreach \i in {1,...,6}
+    \foreach \j in {1,...,4}
       \draw [->] (input-\i) -- (hidden-\j);
 
-  \foreach \i in {1,...,2}
-    \foreach \j in {1,...,2}
+  \foreach \i in {1,...,4}
+    \foreach \j in {1,...,4}
       \draw [->] (hidden-\i) -- (hidden2-\j);
 
-  \foreach \i in {1,...,2}
-    \foreach \j in {1,...,2}
+  \foreach \i in {1,...,4}
+    \foreach \j in {1,...,6}
       \draw [->] (hidden2-\i) -- (output-\j);
 
   \foreach \l [count=\x from 0] in {Input, Hidden, Hidden2, Ouput}
-    \node [align=center, above] at (\x*2,2) {\l \\ layer};
+    \node [align=center, above] at (\x*\layersep,2) {\l \\ layer};
 
   \end{tikzpicture}
-\caption{Neural Network Inside the agent}
+\caption{Q-network in the agent. Input layer is }
 \label{fig2}
 \end{center}
 \end{figure}
