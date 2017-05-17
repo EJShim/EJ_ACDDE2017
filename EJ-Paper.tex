@@ -61,10 +61,10 @@ Virtual point-based servoing simulator is composed of a camera and a plane conta
 \end{center}
 \end{figure}
 
-DQN training is based on Q-learning\cite{ref1} algorithm, using Q-network for approximating Q-table. Experience replay and target $Q$ are also applied to our method to prevent divergence and  stablize the process. For every timestep $t$, environment $\varepsilon$, composed of states$s_t$ actions $a_t$, and rewards $r_t$ are defined. The agent of DQN has Q-network $Q(s, a) \Rightarrow r$, predicts rewards of each action values, so user-defined reward can backpropagate and update weight inside the network\cite{ref2}. In our proposed method, we simply set the state as four error vectors of 2D target points and corresponding ground-truth points. The reward is given according to the variance of error vector size. If the total amount of the error is decreased in $x_{t+1}$, the agent receives reward of value $1.0$, and if the error is increased, the reward is $-1.0$. The total experience size of sequence is set to $30000$ and the training task proceeds when $size(\epsilon) \geq 100$. The action $a$ are consist of six actions as mentioned: forward, backward, up, down, right, left. For each actions, all the distance the camera move is set to $1$. The agent interacts with the simulator by selecting actions in a way that maximises future rewards. The Q-network is composed of a simple four-layered neural network: input layer, two fully-connected layers with 50 neurons, and regression output layer Fig. ~\ref{fig2}.
+DQN training is based on Q-learning\cite{ref1} algorithm, using Q-network for approximating Q-table. Experience replay and target $Q$ are also applied to our method to prevent divergence and  stablize the process. For every timestep $t$, environment $\varepsilon$, composed of states$s_t$ actions $a_t$, and rewards $r_t$ are defined. The agent of DQN has Q-network \ref{actions}, predicts rewards of each action values, so user-defined reward can backpropagate and update weight inside the network\cite{ref2}. In our proposed method, we simply set the state as four error vectors of 2D target points and corresponding ground-truth points. The reward is given according to the variance of error vector size. If the total amount of the error is decreased in $x_{t+1}$, the agent receives reward of value $1.0$, and if the error is increased, the reward is $-1.0$. The total experience size of sequence is set to $30000$ and the training task proceeds when $size(\epsilon) \geq 100$. The action $a$ are consist of six actions as mentioned: forward, backward, up, down, right, left. For each actions, all the distance the camera move is set to $1$. The agent interacts with the simulator by selecting actions in a way that maximises future rewards. The Q-network is composed of a simple four-layered neural network: input layer, two fully-connected layers with 50 neurons, and regression output layer Fig. ~\ref{fig2}.
 
 \begin{equation}\label{actions}
-  a = {a_{Forward}, a_{Backward}, a_{Up}, a_{Down}, a_{Right}, a_{Left}}
+  Q(s, a) \Rightarrow r
 \end{equation}
 
 
@@ -103,13 +103,12 @@ DQN training is based on Q-learning\cite{ref1} algorithm, using Q-network for ap
 
 
 
-  \foreach \l [count=\i] in {1,2,8}
-    \draw [<-] (input-\i) -- ++(-1,0)
-      node [above, midway] {$x_{\l}$};
+  \foreach \l [count=\i] in {1,2,8,1,5,6}
+  {
+    \ifthenelse{\i < 4}{\draw [<-] (input-\i) -- ++(-1,0) node [above, midway] {$x_{\l}$};}{\draw [<-] (input-\i) -- ++(-1,0) node [above, midway] {$a_{\l}$};}
 
-  \foreach \l [count=\i] in {9,13,14}
-    \draw [<-] (input-\i) -- ++(-1,0)
-      node [above, midway] {$a_{\l}$};
+  }
+
 
   \foreach \l [count=\i] in {1,2,49,50}
     \node [above] at (hidden-\i.north) {$W_{\l}$};
@@ -139,16 +138,15 @@ DQN training is based on Q-learning\cite{ref1} algorithm, using Q-network for ap
     \node [align=center, above] at (\x*\layersep,2) {\l \\ layer};
 
   \end{tikzpicture}
-\caption{Q-network in the agent. Input layer is }
+\caption{Q-network in the agent. Input layer is composed of states $s$ and actions $a$. The output layer is rewards}
 \label{fig2}
 \end{center}
 \end{figure}
 
-
-The training process starts after first $100$ steps of random actions. Basically, the position of camera is randomly set where all four target feature points are visible. If the amount of error value of current state $x_t$ is less than $10.0$ the camera is repositioned to a random position. The agent takes input state $x_t$ and forward network, it returns a index of action that has maximum possibioity of network output. The camera carry out action which agent picked, calculate $x_{t+1}$, and reward. The agent takes reward and update the weights
+In the training process, camera position is initialized randomly where all four target feature points are visible. If the error value variation $E_t$ between $x_{t+1}$ and $x_t$ is less than $10.0$ the camera is repositioned according to the camera position initialization function. After $100$ experiences are stacked, the training starts. The agent takes the state $x_t$ and decide action according to DQN network policy; As learning progresses, agent relies more on Q-network then randomly select in order to choose action. The camera performs the action specified by the agent ($camera.GoTo(a_t)$). The reward $r_t$ is fixed according to $E_t$, and the agent takes reward and updates weights of Q-network ($agent.Backward(r_t)$).
 
  \begin{algorithm}
-   \caption{DQN training process for point-based visual servoing}\label{euclid}
+   \caption{DQN training process for point-based visual servoing}\label{algo1}
    \begin{algorithmic}[1]
 
      \State camera.RandomPosition()
@@ -156,16 +154,16 @@ The training process starts after first $100$ steps of random actions. Basically
 
      \For {$t$ in $T$}
 
-     \State $a_t$ = brain.Forward($x_t$)
+     \State $a_t$ =  argmax(Q(s, a;$\theta$))
      \State camera.GoTo($a_t$)
-     \State $E$ = Error($x_{t+1}$) - Error($x_t$)
+     \State $E_t$ = Error($x_{t+1}$) - Error($x_t$)
      \If {E $\geq$ 0}
      \State $r_t$ = $1.0$
      \Else
      \State $r_t$ = -$1.0$
      \EndIf
 
-     brain.Backward($r_t$)
+     agent.Backward($r_t$)
      \If{$r_t$ $leq$ 10.0}
      camera.RandomPosition()
      \EndIf
@@ -184,30 +182,18 @@ The training process starts after first $100$ steps of random actions. Basically
 
 
 \section{Discussion}
- Our proposed DQN model trained using each timestep's 2D feature errors, decided correct action for servoing virtual camera in 3D space. After approximately ???? steps with 64 batchs, and ?????? games with 10 batchs, the average loss and servoing time were oscillated without increasing or decreasing. From this timestep point on, we could regard that our model is well-trained and no further training is meaningless. Our well-trained model can conduct registration from a random position to the optimal position within average of ??? seconds. The visualized camera moved smoothly with almost no unnecessary movement. Compare to conventional method, such as tree searching algorithm or solving jacobi matrices, our proposed method has several benefits. First, the amount of calculation is greatly reduced. conventional method requires large amount of computations. For example, jacobi matrix calculation method needs to calculate inverse or pseudoinverse matrix in each timestep. Random searching method also requires additional calculation: feature error variation, and shows too much unnecessary movement of camera. DQN method requires such calculation only when it is being trained. Once training task is done, this does not require complex computation, and shows efficient servoing movement.
+ Our proposed DQN model is trained using 2D feature vector error as the environment $\varepsilon$, decided correct action $a$ for servoing virtual camera in 3D space. Under our DQN policy, the model became totally dependent the Q-network deciding action after ??????? steps. From this point, the network is well-trained as far as possible, so further training is meaningless. This well-trained model can conduct registration from a random position to the optimal position within average of ??? seconds. The visualized camera moved smoothly with almost no unnecessary movement. Compare to conventional method, such as random tree searching algorithm or jacobian matrix estimation, our proposed method has several benefits. First, the amount of calculation is greatly reduced while conventional method requires large amount of computations. Both methods requires calculation of error varation in every timestep. Furthermore, jacobian matrix estimation method requires to calculate inverse (or pseudoinverse) matrix everytime. In random searching algorithm, such as simulated annealing can easily to fall into local minima, and also, there are too much unnecessary movement durign registration. The DQN method requires such calculation only when it is being trained. Once training task is done, this does not require any complex computation, and shows efficient servoing movement. Second, the proposed method is very easy to implement. Once the form of the network, environment, actions, rewards and some parameters are configured, no more difficult tasks are needed except waiting the agent to be trained.
 
- For now, there are several limitations that need to be improved. First, the camera movement has restrictions compare to the jacobi matrix method. The jacobi matrix calculation method results all-round 3D translation and rotation vector; In our current condition, the movement could only be one of six normalized direction vectors, and no rotations. Under this condition the camera movements looks a little awkward showing staircase. Since all the distance the camera move is $1$, it is also inefficient in terms of utilization of error sizes. Second, states $x_t$ is too simple to apply to 2D-3D registrations. Our current method defined $x_t$ as four 2D point vector errors, but real 2D-3D registration, larger and much more complex features need to be used to define current state.
+ For now, there are several limitations that need to be improved. Firstly, Camera movement is somewhat inefficient like staircase. Because the direction and range in which camera can move is fixed in six actions. The jacobian matrix estimation method can put out all-round 3D translation and rotation vector, this method currently shows much smoother motion during registration. Since all the distance the camera move is $1$, it is also inefficient in terms of utilization of error sizes. Secondly, states $x_t$ is too simple to apply to real 2D-3D registrations. Our current method defined $x_t$ as four 2D point vector errors, but real 2D-3D registration, larger and much more complex features need to be used to define current state.
 
- Those limitations can be possibly resolved in the future works. As for the camera movement problem, adding rotation action and combining camera action according to the whole output matrix of Q-network can solve most of its problems.
-
-
-But in the future, this can possibily be overcome.
-firstly, camera movement can be simply more natural and sophisticated, by using the whole network output and possibilities.
-Rotation can be also added and perform similarily.
-
-secondly, Input state can be defined by using whole rendered image of camera. There are lot of image-handling deep neural networks proposed, we can simply replace our network to one of them.
+  Most of this limitations can soon be resolved in the future works. The camera movement problem can be solved by combining actions. Instead of choosing a single action predicted by $argmax(Q(s, a; \theta ))$, we can use the whole values in output layer of Q-network, and add the action vectors multiplied by the corresponding predicted reward values. This can give a much higher degree of freedom(DOF) to camera motion. Also, adding rotation action is necessary to perform complicated 2D-3D registration. More sophisticated form of stats $x$ can also be easily defined. This is the greatest potential and advantage of using DQN rather then other methods; Comparing jacobian matrix estimation method, as the feature of input state gets more complicated, the computation and complexity for deciding proper action gets exponentially more difficult.
+  This method can use CNN that can self-study the feature information of input images, this method is extreamly easy to implement, and also, can expect good results. There already are many DQN methods succesfully applied to play games that uses rendered game images as input state, deep CNN as its Q-networks\cite{ref2}. Setting stochastic reward can also efficiently utilizes the size of error variation, and reduces registraiton time. To sum it up, our future DQN model uses deep CNN for its value network. takes rendered image of each timestep as input state, predicts actions, and perform registration by combining whole output Q-network layer.
 
 
 
 \section{Conclusion}
 
-We have developed visual servoing simulator using deep Q learning method.
-
-Although there are several limitations for now, there are possible future work can overcome them.
-
-Our visual servoing simulator takes 2D feature point vector errors, and decide camera how to move in 3D space.
-
-This future work can be integrated in near future, and this can perform as 2D-3D registration simulator
+We have proposed and developed a DQN method for 2D-3D registartion. This method is successfuly applied to optimize and solve the point-based visual servoing simulator. This simulator takes 2D feature states to perform in 3D, this basically can be regarded as very simplified 2D-3D registration simulator. Although this is simplified problem, the proposed approach has its strength in terms of solving similar but more complex problems compare to conventional registration methods; For example, jacobian matrix estimation method requires exponential computation and high difficulty as the problem becomes more complicated. Also, most of searching algorithm such as simulated annealing, heel climbing methods for optimizing 2D-3D registration requires to calculate the similarity of two states, and the complexity of two states gets higher, the amount of computation also gets larger. While the DQN only forwards input states to the network, once it is well-trained.
 
 
 \section*{Acknowledgement}
