@@ -12,6 +12,14 @@
 \usetikzlibrary{positioning}
 
 
+%plot data
+\usepackage{pgfplots}
+\usepackage{filecontents}
+\usepackage{subcaption}
+
+
+
+
 % The following is for LaTeX 2.09.
 % \documentstyle[11pt,twocolumn,samplesty,epsfig]{article}
 
@@ -20,10 +28,10 @@
 \title{Deep reinforcement learning for calibration of 2D-3D registration}
 
 \author{Eungjune Shim, \\
-Center for Bionics, Korea Institute of Science and Technology, \\
-Department of Biomedical Engineering, University of Science and Technology, Seoul, Korea
+Division of Bio-Medical Science \& Technology, KIST School \\
+Korea University of Science and Technology, Seoul 02792, Republic of Korea
 \and Youngjun Kim\thanks{Corresponding author email: junekim@kist.re.kr},
-\\ Center for Bionics, Korea Institute of Science and Technology, Seoul, Korea}
+\\ Center for Bionics, Korea Institute of Science and Technology, Seoul 02792, Republic of Korea}
 
 \date{2017-05}
 \maketitle
@@ -53,10 +61,10 @@ Virtual point-based servoing simulator is composed of a camera and a plane conta
 \end{center}
 \end{figure}
 
-DQN training is based on Q-learning\cite{ref1} algorithm, using Q-network for approximating Q-table. Experience replay and target $Q$ are also applied to our method to prevent divergence and  stablize the process. For every timestep $t$, environment $\varepsilon$, composed of states$s_t$ actions $a_t$, and rewards $r_t$ are defined. The agent of DQN has Q-network (\ref{actions}), predicts rewards of each action values, so user-defined reward can backpropagate and update weight inside the network\cite{ref2}. In our proposed method, we simply set the state as four error vectors of 2D target points and corresponding ground-truth points. The reward is given according to the variation of error vector size. If the total amount of the error is decreased in $x_{t+1}$, the agent receives reward of value $1.0$, and if the error is increased, the reward is $-1.0$. The total experience size of sequence is set to $30000$ and the training task proceeds when $size(\epsilon) \geq 100$. The action $a$ are consist of six actions as mentioned: forward, backward, up, down, right, left. For each actions, all the distance the camera move is set to $1$. The agent interacts with the simulator by selecting actions in a way that maximises future rewards. The Q-network is composed of a simple four-layered neural network: input layer, two fully-connected layers with 50 neurons, and regression output layer Fig. ~\ref{fig2}.
+DQN training is based on Q-learning\cite{ref1} algorithm, using Q-network for approximating Q-table. Experience replay and target $Q$ are also applied to our method to prevent divergence and  stablize the process. For every timestep $t$, environment $\varepsilon$, composed of states$x_t$ actions $a_t$, and rewards $r_t$ are defined. The agent of DQN has Q-network (\ref{actions}), predicts rewards of each action values, so user-defined reward can backpropagate and update weight inside the network\cite{ref2}. In our proposed method, we simply set the state as four error vectors of 2D target points and corresponding ground-truth points. The reward is given according to the variation of error vector size. If the total amount of the error is decreased in $x_{t+1}$, the agent receives reward of value $1.0$, and if the error is increased, the reward is $-1.0$.  The action $a$ are consist of six actions as mentioned: forward, backward, up, down, right, left. For each actions, all the distance the camera move is set to $1$. The agent interacts with the simulator by selecting actions in a way that maximises future rewards. The Q-network is composed of a simple four-layered neural network: input layer, two fully-connected layers with 50 neurons, and regression output layer Fig. ~\ref{fig2}.
 
 \begin{equation}\label{actions}
-  Q(s, a) \Rightarrow r
+  Q(x, a) \Rightarrow r
 \end{equation}
 
 
@@ -135,7 +143,8 @@ DQN training is based on Q-learning\cite{ref1} algorithm, using Q-network for ap
 \end{center}
 \end{figure}
 
-In the training process, camera position is initialized randomly where all four target feature points are visible. If the error value variation $E_t$ between $x_{t+1}$ and $x_t$ is less than $10.0$ the camera is repositioned according to the camera position initialization function. After $100$ experiences are stacked, the training starts. The agent takes the state $x_t$ and decide action according to DQN network policy; As learning progresses, agent relies more on Q-network then randomly select in order to choose action. The camera performs the action specified by the agent ($camera.GoTo(a_t)$). The reward $r_t$ is fixed according to $E_t$, and the agent takes reward and updates weights of Q-network ($agent.Backward(r_t)$).
+In the training process, camera position is initialized randomly where all four target feature points are visible. If the error value variation $E_t$ between $x_{t+1}$ and $x_t$ is less than $10.0$ the camera is repositioned according to the camera position initialization function. After $100$ experiences are stacked, the training starts. The agent takes the state $x_t$ and decide action according to DQN network policy; As learning progresses, the exploration epsilon $\epsilon$ slightly decreases, and this value makes agent to rely more on Q-network then randomly select in order to choose action. We set the minimum $\epsilon_{min}$ to 0.005, and when $\epsilon \geq \epsilon_{min}$, the learning task is done. Setting $\epsilon_{min}$ to zero is can make our process to fall into local minima really easily, so we remained to use this value to choose random action even when running calibration task using trained network. The camera performs the action specified by the agent ($camera.GoTo(a_t)$). The reward $r_t$ is fixed according to $E_t$, and the agent takes reward and updates weights of Q-network ($agent.Backward(r_t)$).
+The epoch of training session is set from the state when camera is repositioned to random, and reach the optimal transformation that sets error value to lower than $10.0$.
 
  \begin{algorithm}
    \caption{DQN training process for point-based visual servoing}\label{algo1}
@@ -167,14 +176,122 @@ In the training process, camera position is initialized randomly where all four 
 
 
 \section{Results}
-(Some Pictures)
+We have plotted results of time consumption of each epochs during training(Fig.\ref{fig3}, (a)), and after training(Fig. \ref{fig3}, (b)). Fig.\ref{fig4} shows that the error rate distribution of each epochs. 
 
-(Graph during training)
+
+\begin{figure}[htb]
+\begin{center}
+  \begin{tikzpicture}
+      \begin{axis}[width=0.5\columnwidth, at={(0.0\columnwidth, 0)}]
+          \addplot[red] table [x=episodes, y=time, col sep=comma] {data/progress.csv};
+      \end{axis}
+
+      \begin{axis}[width=0.5\columnwidth, at={(0.5\columnwidth, 0)}]
+          \addplot[only marks] table [x=episodes, y=time, col sep=comma] {data/progress2.csv};
+      \end{axis}
+  \end{tikzpicture}
+\caption{Searching time during learning progress}
+\label{fig3}
+\end{center}\end{figure}
+
+
+
+\newpage
+\def\ysep{5.0}
+\def\xsep{0.35}
+\begin{figure}[htb]
+\begin{center}
+  \begin{tikzpicture}
+    \begin{axis}[width=0.4\columnwidth, at={(0.0, -0.0)}, name=graph1, ymax = 200]
+        \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_0.csv};
+    \end{axis}
+
+    \begin{axis}[width=0.4\columnwidth, at={(\xsep\columnwidth, -0.0)}, name=graph2, ymax = 200]
+      \foreach \i in {1,...,10}
+        \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
+    \end{axis}
+
+    \begin{axis}[width=0.4\columnwidth, at={(\xsep*2\columnwidth, -0.0)}, name=graph3, ymax = 200]
+      \foreach \i in {11,...,110}
+        \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
+    \end{axis}
+
+
+
+    \begin{axis}[width=0.4\columnwidth, at={(0.0\columnwidth, -\ysep cm)}, name=graph4, ymax = 200]
+      \foreach \i in {111,...,200}
+        \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
+    \end{axis}
+
+
+    \begin{axis}[width=0.4\columnwidth, at={(\xsep\columnwidth, -\ysep cm)}, name=graph5, ymax = 200]
+      \foreach \i in {201,...,250}
+        \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
+    \end{axis}
+
+
+    \begin{axis}[width=0.4\columnwidth, at={(\xsep*2\columnwidth, -\ysep cm)}, name=graph6, ymax = 200]
+      \foreach \i in {251,...,300}
+        \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
+    \end{axis}
+
+
+
+
+    \begin{axis}[width=0.4\columnwidth, at={(0.0\columnwidth, -\ysep*2 cm)}, name=graph7, ymax = 200]
+      \foreach \i in {301,...,350}
+        \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
+    \end{axis}
+
+
+    \begin{axis}[width=0.4\columnwidth, at={(\xsep\columnwidth, -\ysep*2 cm)}, name=graph8, ymax = 200]
+      \foreach \i in {351,...,400}
+        \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
+    \end{axis}
+
+
+    \begin{axis}[width=0.4\columnwidth, at={(\xsep*2\columnwidth, -\ysep*2 cm)}, name=graph9, ymax = 200]
+      \foreach \i in {401,...,450}
+        \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
+    \end{axis}
+
+
+
+
+
+    \begin{axis}[width=0.4\columnwidth, at={(0.0\columnwidth, -\ysep*3 cm)}, name=graph10, ymax = 200]
+      \foreach \i in {451,...,500}
+        \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
+    \end{axis}
+
+
+    \begin{axis}[width=0.4\columnwidth, at={(\xsep\columnwidth, -\ysep*3 cm)}, name=graph11, ymax = 200]
+      \foreach \i in {501,...,540}
+        \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
+    \end{axis}
+
+
+    \begin{axis}[width=0.4\columnwidth, at={(\xsep*2\columnwidth, -\ysep*3 cm)}, name=graph12, ymax = 200]
+      \foreach \i in {541,...,545}
+        \addplot table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
+    \end{axis}
+
+
+    %Add Description
+    \foreach \l [count=\i] in {0,1-10,11-110,111-200,201-250,251-300,301-350, 351-400, 401-450, 451-500, 501-540, 541-545(last Epoch)}{
+      \node[above] at (graph\i.north) {Epoch \l};
+    }
+
+  \end{tikzpicture}
+\caption{Error rate variation}
+\label{fig4}
+\end{center}\end{figure}
+\newpage
 
 
 
 \section{Discussion}
- Our proposed DQN model is trained using 2D feature vector error as the environment $\varepsilon$, decided correct action $a$ for servoing virtual camera in 3D space. Under our DQN policy, the model became totally dependent the Q-network deciding action after ??????? steps. From this point, the network is well-trained as far as possible, so further training is meaningless. This well-trained model can conduct registration from a random position to the optimal position within average of ??? seconds. The visualized camera moved smoothly with almost no unnecessary movement. Compare to conventional method, such as random tree searching algorithm or jacobian matrix estimation, our proposed method has several benefits. First, the amount of calculation is greatly reduced while conventional method requires large amount of computations. Both methods requires calculation of error varation in every timestep. Furthermore, jacobian matrix estimation method requires to calculate inverse (or pseudoinverse) matrix everytime. In random searching algorithm, such as simulated annealing can easily to fall into local minima, and also, there are too much unnecessary movement durign registration. The DQN method requires such calculation only when it is being trained. Once training task is done, this does not require any complex computation, and shows efficient servoing movement. Second, the proposed method is very easy to implement. Once the form of the network, environment, actions, rewards and some parameters are configured, no more difficult tasks are needed except waiting the agent to be trained.
+ Our proposed DQN model is trained using 2D feature vector error as the environment $\varepsilon$, decided correct action $a$ for servoing virtual camera in 3D space. Under our DQN policy, the model became very dependent the Q-network deciding action after ??????? steps. From this point, the network is well-trained as far as possible, so further training is meaningless. This well-trained model can conduct registration from a random position to the optimal position within average of ??? seconds. The visualized camera moved smoothly with almost no unnecessary movement. Compare to conventional method, such as random tree searching algorithm or jacobian matrix estimation, our proposed method has several benefits. First, the amount of calculation is greatly reduced while conventional method requires large amount of computations. Both methods requires calculation of error varation in every timestep. Furthermore, jacobian matrix estimation method requires to calculate inverse (or pseudoinverse) matrix everytime. In random searching algorithm, such as simulated annealing can easily to fall into local minima, and also, there are too much unnecessary movement durign registration. The DQN method requires such calculation only when it is being trained. Once training task is done, this does not require any complex computation, and shows efficient servoing movement. Second, the proposed method is very easy to implement. Once the form of the network, environment, actions, rewards and some parameters are configured, no more difficult tasks are needed except waiting the agent to be trained.
 
  For now, there are several limitations that need to be improved. Firstly, Camera movement is somewhat inefficient like staircase. Because the direction and range in which camera can move is fixed in six actions. The jacobian matrix estimation method can put out all-round 3D translation and rotation vector, this method currently shows much smoother motion during registration. Since all the distance the camera move is $1$, it is also inefficient in terms of utilization of error sizes. Secondly, states $x_t$ is too simple to apply to real 2D-3D registrations. Our current method defined $x_t$ as four 2D point vector errors, but real 2D-3D registration, larger and much more complex features need to be used to define current state.
 
