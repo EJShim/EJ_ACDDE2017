@@ -17,7 +17,7 @@
 
 \begin{document}
 
-\title{An approach to 2D/3D registration using deep reinforcement learning \\(ACDDE 2017)}
+\title{Deep reinforcement learning for calibration of 2D-3D registration}
 
 \author{Eungjune Shim, \\
 Center for Bionics, Korea Institute of Science and Technology, \\
@@ -25,30 +25,22 @@ Department of Biomedical Engineering, University of Science and Technology, Seou
 \and Youngjun Kim\thanks{Corresponding author email: junekim@kist.re.kr},
 \\ Center for Bionics, Korea Institute of Science and Technology, Seoul, Korea}
 
-
-%
-
 \date{2017-05}
 \maketitle
 
 \begin{abstract}
- Deep Q Learning method is a novel approach to approximate value functions of reinforcement learning. This has been successfully applied to solve problems such as robot control, elevator scheduling, telecommunication networks. We applied this method to a simplified 2D-3D registration problem; Point-based visual servoing simulator. The simulator environment has been virtually organized in three-dimensional space: four three-dimensional target point vectors and two-dimensional correct point vector, and a virtual camera are defined. For each timesteps, camera moves according to the output of a neural network(Q-network), and the 3D target points are projected onto the viewport. The purpose of this simulator is to reduce 2D vector error between target and correct point vectors. The Q-network takes states of current timestep, decide a action, receive rewards and update weights. The actins are defined in six: camera moves forward, backward, top, bottom, right, left. The state is defined as four 2D error vectors. As learning processes, the network moves camera with higher possibility of reducing errors. When using well-trained network, there are several benefits compare to conventional methods, such as random searching algorithms or jacobian matrix estimation. While conventional method requires computation of error variance or matrix inverse in every timestep, our proposed method only requires simple network forwarding to find its solution. Since this method used too much simplified registration environment and camera actions, the performance looks a little bit awkward, but there still are a lot to improve from this approach. Firstly, we can define each step's state with much more complex and sophisticated form by replacing the neural network. There are many Convolutional Neural Networks(CNNs) proposed to handle 2D images, the state can be defined simply using virtual camera's rendered image, not eight-digit 2D point error vectors. Secondly, the camera actions can be more natural and efficient by using the whole output possibility of the network, and combining action. As our proposed method shows considerable benefit over the conventional method, the future work from this approach can be expected to be applicable to real 2D-3D registration works.
+ Deep Q Learning method is a novel approach to approximate value functions of reinforcement learning. This has been successfully applied to solve problems such as robot control, elevator scheduling, telecommunication networks. We applied this method to a simplified 2D-3D registration problem; Point-based visual servoing simulator. The simulator environment has been virtually organized in three-dimensional space: four three-dimensional target point vectors and two-dimensional correct point vector, and a virtual camera are defined. For each timesteps, camera moves according to the output of a neural network(Q-network), and the 3D target points are projected onto the viewport. The purpose of this simulator is to reduce 2D vector error between target and correct point vectors. The Q-network takes states of current timestep, decide a action, receive rewards and update weights. The actins are defined in six: camera moves forward, backward, top, bottom, right, left. The state is defined as four 2D error vectors. As learning processes, the network moves camera with higher possibility of reducing errors. When using well-trained network, there are several benefits compare to conventional methods, such as random searching algorithms or jacobian matrix estimation. While conventional method requires computation of error variation or matrix inverse in every timestep, our proposed method only requires simple network forwarding to find its solution. Since this method used too much simplified registration environment and camera actions, the performance looks a little bit awkward, but there still are a lot to improve from this approach. Firstly, we can define each step's state with much more complex and sophisticated form by replacing the neural network. There are many Convolutional Neural Networks(CNNs) proposed to handle 2D images, the state can be defined simply using virtual camera's rendered image, not eight-digit 2D point error vectors. Secondly, the camera actions can be more natural and efficient by using the whole output possibility of the network, and combining action. As our proposed method shows considerable benefit over the conventional method, the future work from this approach can be expected to be applicable to real 2D-3D registration works.
 
 \vspace*{5mm}
 \noindent
 {\bf Key words:}  Deep Q Learning, Reinforcement Learning, 2D-3D Registration, Visual Servoing
 \end{abstract}
 
+\newpage
 \section{Introduction}
-
- Deep Q Learning(DQN) method is a novel approach that has been successfully applied to solve problems such as robot control, elevator scheduling, telecomunication networks.
-
- (Some Related Works)
-
- We applied this method in a simple point-based virtual visual servoing simulator.
-
- In the simulator, we use four 2D vector errors to find 3D camera transformation, This is a basic concept of 2D-3D registration, so this approach shows possibility to extend solving 2D-3D registration problems using DQN.
-
+ There are various methods using 2D features to perform in 3D space. As image processing and 3D technology evolves and computing power increases, many related works with this approach have become possible. Some methods using monoscopic camera when 3D scanning\cite{3dscanning}, camera calibration\cite{cameracalibration}, motion capture\cite{motioncapture}, or visual servoing\cite{visualservoing} are all using 2D features to somehow perform in 3D space. In this paper, we proposed an approach to solve 2D-3D registration problems. 2D-3D registration also uses 2D features to conduct registration in 3D. This method is largely used in medical field. Representatively,  registering 3D dicom volume obtained from Computed Tomography(CT), or Magnetic Resonance Imaging(MRI) to 2D X-ray image can produce very valuable information in diagnosing patients' conditions. For example, when diagnosing patient's orthopedic condition, well-aligned 3D data gives a lot of advantages that we can visualize 3D data with information that can only be obtained from X-ray images \cite{femoral, tka}.\\
+ There have been many optimization approaches proposed and deviced to apply on this registration task. When 2D features are simple as points, lines or binary or faces, jacobian matrix estimation\cite{jacobianmatrix} method is well known as robust and largely used. This method extracts meaningful features from target image, define and calculate error between target and correct 2D feature, conduct calibration task. This method requires considerable amount of 2D data's pre-processing and feature matching in every timestep, and also need large inverse matrix operation. Decisively, this method is not applicable for most of 2D-3D registration that uses various 2D images such as x-ray radiograph.  There have been many methods for image comparison have been proposed, such as edge-filtering\cite{edge} to pre-process image data in this task. Too much simplified image feature can possibly lose most of information, it might loss most of valuable information of image resulting inefficiency. Because of these reasons jacobian matrix estimation method normally cannot perform well on most of 2D-3D registration methods. Also, there are a lot of method to define errors between 2D features \cite{validation}, and optimize errors. The optimization is normally applied in an iterative way such as simulated annealing algorithms\cite{edge}. This optimization task also has limitations such as local minima, or unnecessary searching.\\
+ In recent years, deep learning method has attracted a lot of attention when solving optimization problems. Especially in image or natural language processing, Most state-of-the-art methods are based on deep learning\cite{deepimage, deeplanguage}. in problems with very large searching space such as playing games, or 2D-3D registration, deep reinforcement learning method is commonly used. Current state-of-art reinforcement learning method is Deep Q-learning(DQN)\cite{dqn} proposed by \emph{DeepMind}. This learning method is succesfully applied to learn and play complex tasks such as Atari games\cite{ref2}. We also have chosen DQN method to conduct 2D-3D registration. Since our method is just approach to figure out if it can be applied to registration problems, we made models and problems as simple as possible. We succesfully applied DQN method to perform 4-point based visual servoing simulator, recorded learning outcomes and effects, and proposed a possible and strong future study plan that can be derived from this method.
 
 \section{Methods}
 Virtual point-based servoing simulator is composed of a camera and a plane containing four circles on it in a virtual 3D space. The plane normal and the camera view vectors are parallel to world coordinate's Y-axis. Since no rotation is possible in the condition of this simulator, camera view vector will not be changed. Normally in visual servoing, four point features are extracted from the rendered image by using image processing algorithms. Since our purpose is to test our DQN-based 2D-3D registration algorithm, we decided to skip this process. Instead of that, we pre-defined the 3D positions of four feature points, extract to the 2D rendering viewport by unproject them. This has the same effect as feature detection. This simulator runs on web browser, used javascript-based \emph{WebGL} library named \emph{Three.js}.
@@ -61,7 +53,7 @@ Virtual point-based servoing simulator is composed of a camera and a plane conta
 \end{center}
 \end{figure}
 
-DQN training is based on Q-learning\cite{ref1} algorithm, using Q-network for approximating Q-table. Experience replay and target $Q$ are also applied to our method to prevent divergence and  stablize the process. For every timestep $t$, environment $\varepsilon$, composed of states$s_t$ actions $a_t$, and rewards $r_t$ are defined. The agent of DQN has Q-network \ref{actions}, predicts rewards of each action values, so user-defined reward can backpropagate and update weight inside the network\cite{ref2}. In our proposed method, we simply set the state as four error vectors of 2D target points and corresponding ground-truth points. The reward is given according to the variance of error vector size. If the total amount of the error is decreased in $x_{t+1}$, the agent receives reward of value $1.0$, and if the error is increased, the reward is $-1.0$. The total experience size of sequence is set to $30000$ and the training task proceeds when $size(\epsilon) \geq 100$. The action $a$ are consist of six actions as mentioned: forward, backward, up, down, right, left. For each actions, all the distance the camera move is set to $1$. The agent interacts with the simulator by selecting actions in a way that maximises future rewards. The Q-network is composed of a simple four-layered neural network: input layer, two fully-connected layers with 50 neurons, and regression output layer Fig. ~\ref{fig2}.
+DQN training is based on Q-learning\cite{ref1} algorithm, using Q-network for approximating Q-table. Experience replay and target $Q$ are also applied to our method to prevent divergence and  stablize the process. For every timestep $t$, environment $\varepsilon$, composed of states$s_t$ actions $a_t$, and rewards $r_t$ are defined. The agent of DQN has Q-network (\ref{actions}), predicts rewards of each action values, so user-defined reward can backpropagate and update weight inside the network\cite{ref2}. In our proposed method, we simply set the state as four error vectors of 2D target points and corresponding ground-truth points. The reward is given according to the variation of error vector size. If the total amount of the error is decreased in $x_{t+1}$, the agent receives reward of value $1.0$, and if the error is increased, the reward is $-1.0$. The total experience size of sequence is set to $30000$ and the training task proceeds when $size(\epsilon) \geq 100$. The action $a$ are consist of six actions as mentioned: forward, backward, up, down, right, left. For each actions, all the distance the camera move is set to $1$. The agent interacts with the simulator by selecting actions in a way that maximises future rewards. The Q-network is composed of a simple four-layered neural network: input layer, two fully-connected layers with 50 neurons, and regression output layer Fig. ~\ref{fig2}.
 
 \begin{equation}\label{actions}
   Q(s, a) \Rightarrow r
@@ -83,7 +75,7 @@ DQN training is based on Q-learning\cite{ref1} algorithm, using Q-network for ap
 }
 \begin{figure}[htb]
 \begin{center}
-  \begin{tikzpicture}[x=1.5cm, y=1.5cm, >=stealth]
+  \begin{tikzpicture}[x=1.5cm, y=1.2cm, >=stealth]
 
  \def\layersep{2.5}
  %Input Layer
@@ -193,43 +185,16 @@ In the training process, camera position is initialized randomly where all four 
 
 \section{Conclusion}
 
-We have proposed and developed a DQN method for 2D-3D registartion. This method is successfuly applied to optimize and solve the point-based visual servoing simulator. This simulator takes 2D feature states to perform in 3D, this basically can be regarded as very simplified 2D-3D registration simulator. Although this is simplified problem, the proposed approach has its strength in terms of solving similar but more complex problems compare to conventional registration methods; For example, jacobian matrix estimation method requires exponential computation and high difficulty as the problem becomes more complicated. Also, most of searching algorithm such as simulated annealing, heel climbing methods for optimizing 2D-3D registration requires to calculate the similarity of two states, and the complexity of two states gets higher, the amount of computation also gets larger. While the DQN only forwards input states to the network, once it is well-trained.
+We have proposed and developed a DQN method for 2D-3D registartion. This method is successfuly applied to optimize and solve the point-based visual servoing simulator. Since this simulator takes 2D feature states to perform in 3D, this basically can be regarded as very simplified 2D-3D registration simulator. Although this is simplified problem, the proposed approach has its strength in terms of solving similar but more complex problems compare to conventional registration methods; For example, jacobian matrix estimation method requires exponential computation and high difficulty as the problem becomes more complicated. Also, most of searching algorithm such as simulated annealing, heel climbing methods for optimizing 2D-3D registration requires to calculate the similarity of two states, and the complexity of two states gets higher, the amount of computation also gets larger. While the well-trained DQN model only forwards input states to the network to find proper actions. Thanks to this very powerful strengths we can expect to resolve most of limitations in the near future, and apply this apporoach to the higher-order 2D-3D registration problems.
 
 
 \section*{Acknowledgement}
 This research was supported by the KIST institutional program (??????, ???????).
 
 
+\newpage
 \bibliographystyle{elsarticle-num}
 \bibliography{references}
 
-%
-% \begin{thebibliography}{9}
-% \bibitem{ref1}
-% S.~Fortune, A sweepline algorithm for Voronoi diagrams,
-% {\it Algorithmica} {\bf 2} (1987), pp.153--174.
-%
-% \bibitem{ref2}
-% G.~Farin, {\it Curves and Surfaces for Computer Aided Geometric
-% Design: A Practical Guide}, Academic Press, San Diego, 1988.
-%
-% \bibitem{ref3}
-% A. Okabe, B. Boots, K. Sugihara, and S.N. Chiu,
-% {\it Spatial Tessellations: Concepts and Applications of
-% Voronoi Diagrams}, 2nd Edition, John Wiles \& Sons, Chichester, 2000.
-%
-% \bibitem{ref4}
-% T. Pavlidis, Curve fitting with conic splines,
-% {\it ACM Transactions on Graphics} {\bf 19} (1983), pp. 151--159.
-%
-% \bibitem{ref5}
-% K. Sugihara's Homepage,
-% \texttt{http://www.simplex.t.u-tokyo.ac.jp/\~{}sugihara/}, 2005.
-%
-% \bibitem{ref6}
-% G. Taubin, A signal processing approach to fair surface design,
-% in {\it Proc. of SIGGRAPH} (1995), pp. 351--358.
-%
-% \end{thebibliography}
 
 \end{document}
