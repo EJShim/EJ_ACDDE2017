@@ -27,17 +27,16 @@
 
 \title{Deep reinforcement learning for calibration of 2D-3D registration}
 
-\author{Eungjune Shim, \\
-Division of Bio-Medical Science \& Technology, KIST School \\
+\author{Eungjune Shim$^1$, Hannah Kim$^1$, Laehyun Kim$^2$, Youngjun Kim$^{1,}$\thanks{Corresponding author email: junekim@kist.re.kr}\\
+$^1$Division of Bio-Medical Science \& Technology, KIST School, \\
 Korea University of Science and Technology, Seoul 02792, Republic of Korea
-\and Youngjun Kim\thanks{Corresponding author email: junekim@kist.re.kr},
-\\ Center for Bionics, Korea Institute of Science and Technology, Seoul 02792, Republic of Korea}
+\\ $^2$Center for Bionics, Korea Institute of Science and Technology, Seoul 02792, Republic of Korea}
 
 \date{2017-05}
 \maketitle
 
 \begin{abstract}
- Deep Q Learning method is a novel approach to approximate value functions of reinforcement learning. This has been succesfully applied to solve problems such as robot control, elevator scheduling, telecommunication networks. We applied this method to a simplified 2D-3D registration problem; Point-based visual servoing simulator. The simulator environment has been virtually organized in three-dimensional space: four three-dimensional target point vectors and two-dimensional correct point vector, and a virtual camera are defined. For each timesteps, camera moves according to the output of a neural network(Q-network), and the 3D target points are projected onto the viewport. The purpose of this simulator is to reduce 2D vector error between target and correct point vectors. The Q-network takes states of current timestep, decide a action, receive rewards and update weights. The actins are defined in six: camera moves forward, backward, top, bottom, right, left. The state is defined as four 2D error vectors. As learning processes, the network moves camera with higher possibility of reducing errors. When using well-trained network, there are several benefits compare to conventional methods, such as random searching algorithms or jacobian matrix estimation. While conventional method requires computation of error variation or matrix inverse in every timestep, our proposed method only requires simple network forwarding to find its solution. Since this method used too much simplified registration environment and camera actions, the performance looks a little bit awkward, but there still are a lot to improve from this approach. Firstly, we can define each step's state with much more complex and sophisticated form by replacing the neural network. There are many Convolutional Neural Networks(CNNs) proposed to handle 2D images, the state can be defined simply using virtual camera's rendered image, not eight-digit 2D point error vectors. Secondly, the camera actions can be more natural and efficient by using the whole output possibility of the network, and combining action. As our proposed method shows considerable benefit over the conventional method, the future work from this approach can be expected to be applicable to real 2D-3D registration works.
+The Deep Q-Learning method is a novel approach to approximate the value functions of reinforcement learning. It has been successfully applied to solve problems in robot control, elevator scheduling, and telecommunication networks. We applied this method to a simplified 2D-3D registration problem, a point-based visual servoing simulator. The simulator environment was virtually organized in 3D space: four 3D target point vectors, a 2D correct point vector, and a virtual camera are defined. For each time step, the camera moves according to the output of a neural network (Q-network), and the 3D target points are projected onto the viewport. The purpose of this simulator is to reduce 2D vector errors between target and correct point vectors. The Q-network takes the states of the current time step, selects a action, receives rewards, and updates weights. The actions are defined in six directions: the camera moves forward, backward, up, down, right, left. The state is defined as four 2D error vectors. As learning progresses, the network moves the camera to increase to probability of reducing errors. There are several advantages to using a well-trained network compared to conventional methods such as random search algorithms or Jacobian matrix estimation. While conventional methods require the computation of error variations or inverse matrix in every time step, our proposed method only requires simple network forwarding to find its solution. However, since this method used an oversimplified registration environment and camera actions, its performance was a bit awkward; but there still are a lot to improve from this approach. First, we can define each step's state with much more complex and sophisticated forms by replacing the neural network. Many convolutional neural networks have been proposed to handle 2D images. The state can be defined by simply using the virtual camera's rendered image instead of eight-digit 2D point error vectors. Second, the camera actions can be more natural and efficient by using the whole output possibility of the network and combining actions. As our proposed method shows considerable advantages over conventional methods, future work will eventually make it applicable to real 2D-3D registration processes.
 
 \vspace*{5mm}
 \noindent
@@ -46,25 +45,25 @@ Korea University of Science and Technology, Seoul 02792, Republic of Korea
 
 \newpage
 \section{Introduction}
- There are various methods using 2D features to perform in 3D space. As image processing and 3D technology evolves and computing power increases, many related works with this approach have become possible. Some methods using monoscopic camera when 3D scanning\cite{3dscanning}, camera calibration\cite{cameracalibration}, motion capture\cite{motioncapture}, or visual servoing\cite{visualservoing} are all using 2D features to somehow perform in 3D space. In this paper, we proposed an approach to solve 2D-3D registration problems. 2D-3D registration also uses 2D features to conduct registration in 3D. This method is largely used in medical field. Representatively,  registering 3D dicom volume obtained from Computed Tomography(CT), or Magnetic Resonance Imaging(MRI) to 2D X-ray image can produce very valuable information in diagnosing patients' conditions. For example, when diagnosing patient's orthopedic condition, well-aligned 3D data gives a lot of advantages that we can visualize 3D data with information that can only be obtained from X-ray images \cite{femoral, tka}.\\
- There have been many optimization approaches proposed and deviced to apply on this registration task. When 2D features are simple as points, lines or binary or faces, jacobian matrix estimation\cite{jacobianmatrix} method is well known as robust and largely used. This method extracts meaningful features from target image, define and calculate error between target and correct 2D feature, conduct calibration task. This method requires considerable amount of 2D data's pre-processing and feature matching in every timestep, and also need large inverse matrix operation. Decisively, this method is not applicable for most of 2D-3D registration that uses various 2D images such as x-ray radiograph.  There have been many methods for image comparison have been proposed, such as edge-filtering\cite{edge} to pre-process image data in this task. Too much simplified image feature can possibly lose most of information, it might loss most of valuable information of image resulting inefficiency. Because of these reasons jacobian matrix estimation method normally cannot perform well on most of 2D-3D registration methods. Also, there are a lot of method to define errors between 2D features \cite{validation}, and optimize errors. The optimization is normally applied in an iterative way such as simulated annealing algorithms\cite{edge}. This optimization task also has limitations such as local minima, or unnecessary searching.\\
- In recent years, deep learning method has attracted a lot of attention when solving optimization problems. Especially in image or natural language processing, Most state-of-the-art methods are based on deep learning\cite{deepimage, deeplanguage}. in problems with very large searching space such as playing games, or 2D-3D registration, deep reinforcement learning method is commonly used. Current state-of-art reinforcement learning method is Deep Q-learning(DQN)\cite{dqn} proposed by \emph{DeepMind}. This learning method is succesfully applied to learn and play complex tasks such as Atari games\cite{ref2}. We also have chosen DQN method to conduct 2D-3D registration. Since our method is just approach to figure out if it can be applied to registration problems, we made models and problems as simple as possible. We succesfully applied DQN method to perform 4-point based visual servoing simulator, recorded learning outcomes and effects, and proposed a possible and strong future study plan that can be derived from this method.
+ There are various methods that use 2D features to perform in 3D space. As image processing and 3D technologies evolve and computing power increases, many related works using this approach have become possible. Some methods utilize a monoscopic camera for 3D scanning\cite{3dscanning}, camera calibration\cite{cameracalibration}, motion capture\cite{motioncapture}, or visual servoing\cite{visualservoing}, and all are using 2D features to somehow perform in 3D space. In this paper, we proposed an approach to solve 2D-3D registration problems. 2D-3D registration also uses 2D features to conduct registration in 3D. This method is largely used in the medical field. Registering 3D dicom volume obtained from computed tomography or magnetic resonance imaging to a 2D X-ray image can produce valuable information in diagnosing patient conditions. For example, when diagnosing an orthopedic patient's condition, well-aligned 3D data can be used to visualize 3D data with information that can only be obtained from X-ray images \cite{femoral, tka}.\\
+ Many optimization approaches have been proposed and developed to apply to this registration task. When 2D features are simple as points, lines, or binary or faces, the Jacobian matrix estimation\cite{jacobianmatrix} method is known to be robust and is frequently used. This method extracts meaningful features from the target image, defines and calculates the error between the target and correct 2D features, and performs calibration. This method requires a considerable amount of 2D data preprocessing and feature matching in every time step, as well as large inverse matrix operations. Thus, this method is not applicable to most 2D-3D registration processes that use various 2D images such as x-ray radiographs. Many image comparison methods have been proposed, such as edge-filtering\cite{edge}, to preprocess image data for this task. Too much simplified image feature can possibly lose most of information, it might loss most of valuable information of image resulting inefficiency. For these reasons, the Jacobian matrix estimation method is unsuitable for most 2D-3D registration processes. There are also plenty of methods to define errors between 2D features \cite{validation} and optimize errors. Optimization is normally conducted using iterative methods, such as simulated annealing algorithms\cite{edge}. However, this optimization task also has limitations such as local minima or unnecessary searches.\\
+ In recent years, deep learning methods have attracted interest for solving optimization problems in image or natural language processing, Most state-of-the-art methods are based on deep learning\cite{deepimage, deeplanguage}. For problems with very a large search space such as game playing or 2D-3D registration, deep reinforcement learning methods are often used. The current state-of-art reinforcement learning method is Deep Q-Network (DQN)\cite{dqn} learning proposed by \emph{DeepMind}. DQN has been successfully applied to learn and perform complex tasks such as playing Atari games\cite{ref2}. We also have chosen the DQN method to conduct 2D-3D registration. Since our method is an approach to determine whether DQN can be applied to registration problems, we made our models and problems as simple as possible. We successfully applied DQN to operate a four-point-based visual servoing simulator, recorded learning outcomes and effects, and proposed a strong future research plan based on this method.
 
 \section{Methods}
-Virtual point-based servoing simulator is composed of a camera and a plane containing four circles on it in a virtual 3D space. The plane normal and the camera view vectors are parallel to world coordinate's Y-axis. Since no rotation is possible in the condition of this simulator, camera view vector will not be changed. Normally in visual servoing, four point features are extracted from the rendered image by using image processing algorithms. Since our purpose is to test our DQN-based 2D-3D registration algorithm, we decided to skip this process. Instead of that, we pre-defined the 3D positions of four feature points, extract to the 2D rendering viewport by unproject them. This has the same effect as feature detection. This simulator runs on web browser, used javascript-based \emph{WebGL} library named \emph{Three.js}.
+The virtual point-based servoing simulator is composed of a camera and a plane containing four circles in a virtual 3D space. The plane normal and camera view vectors are parallel to the y-axis of the world coordinate system. Since rotation is not possible under the conditions of this simulator, the camera view vector will not be changed. In visual servoing, four feature points are normally extracted from the rendered image using image processing algorithms. Since our purpose is to test our DQN-based 2D-3D registration algorithm, we decided to skip this process. Instead, we pre-defined the 3D positions of the four feature points and extracted these to the 2D rendering viewport by unprojecting them; this has the same effect as feature detection. The simulator runs on a web browser and used a JavaScript-based \emph{WebGL} library named \emph{Three.js}.
 
 \begin{figure}[htb]
 \begin{center}
 \includegraphics[width=0.8\columnwidth]{images/fig-temp1.png}
-\caption{3D Servoing Environment, renderer image(left), and 3D objects(right)}
+\caption{3D servoing environment: renderer image(left) and 3D objects(right)}
 \label{fig1}
 \end{center}
 \end{figure}
 
-DQN training is based on Q-learning\cite{ref1} algorithm, using Q-network for approximating Q-table. Experience replay and target $Q$ are also applied to our method to prevent divergence and  stablize the process. For every timestep $t$, environment $\varepsilon$, composed of states$x_t$ actions $a_t$, and rewards $r_t$ are defined. The agent of DQN has Q-network (\ref{actions}), predicts rewards of each action values, so user-defined reward can backpropagate and update weight inside the network\cite{ref2}. In our proposed method, we simply set the state as four error vectors of 2D target points and corresponding ground-truth points. The reward is given according to the variation of error vector size. If the total amount of the error is decreased in $x_{t+1}$, the agent receives reward of value $1.0$, and if the error is increased, the reward is $-1.0$.  The action $a$ are consist of six actions as mentioned: forward, backward, up, down, right, left. For each actions, all the distance the camera move is set to $1$. The agent interacts with the simulator by selecting actions in a way that maximises future rewards. The Q-network is composed of a simple four-layered neural network: input layer, two fully-connected layers with 50 neurons, and regression output layer Fig. ~\ref{fig2}.
+DQN training is based on a Q-learning\cite{ref1} algorithm that uses a Q-network for approximating the Q-table. Experience replay and target $Q$ are also applied to our method to prevent divergence and stabilize the process. For every time step $t$, the environment $\varepsilon$, composed of states $x_t$, actions $a_t$, and rewards $r_t$ are defined. The DQN agent has a Q-network (\ref{actions}) that predicts the rewards for each action value(Equation \ref{eq1}) so that user-defined rewards can backpropagate and update weights inside the network\cite{ref2}. In our proposed method, we simply set the state as four error vectors of 2D target points and the corresponding ground truth points. The reward is given according to variations in error vector size. If the total value of the error decreases in $x_{t+1}$, the agent receives a reward valued at $1.0$; if the error increases, the reward is $-1.0$. The action $a$ moves in six directions: forward, backward, up, down, right, left. For each action, all the distance the camera move is set to $1$. The agent interacts with the simulator by selecting actions in a way that maximizes future rewards. The Q-network is composed of a simple four-layer neural network: an input layer, two fully-connected layers with 50 neurons, and a regression output layer Fig. ~\ref{fig2}.
 
-\begin{equation}\label{actions}
-  Q(x, a) \Rightarrow r
+\begin{equation}\label{eq1}
+  Q(x, a ; \theta) \Rightarrow r
 \end{equation}
 
 
@@ -72,7 +71,7 @@ DQN training is based on Q-learning\cite{ref1} algorithm, using Q-network for ap
   every neuron/.style={
     circle,
     draw,
-    minimum size=1cm
+    minimum size=0.5cm
   },
   neuron missing/.style={
     draw=none,
@@ -138,15 +137,16 @@ DQN training is based on Q-learning\cite{ref1} algorithm, using Q-network for ap
     \node [align=center, above] at (\x*\layersep,2) {\l \\ layer};
 
   \end{tikzpicture}
-\caption{Q-network in the agent. Input layer is composed of states $s$ and actions $a$. The output layer is rewards}
+\caption{Q-network in the agent. The input layer is composed of states $s$ and actions $a$. The output layer is composed of rewards}
 \label{fig2}
 \end{center}
 \end{figure}
 
-In the training process, camera position is initialized randomly where all four target feature points are visible. If the error value variation $E_t$ between $x_{t+1}$ and $x_t$ is less than $10.0$ the camera is repositioned according to the camera position initialization function. After $100$ experiences are stacked, the training starts. The agent takes the state $x_t$ and decide action according to DQN network policy; As learning progresses, the exploration epsilon $\epsilon$ slightly decreases, and this value makes agent to rely more on Q-network then randomly select in order to choose action. We set the minimum $\epsilon_{min}$ to 0.005, and when (eq??), the learning task is done. Setting $\epsilon_{min}$ to zero is can make our process to fall into local minima really easily, so we remained to use this value to choose random action even when running calibration task using trained network. The camera performs the action specified by the agent ($camera.GoTo(a_t)$). The reward $r_t$ is fixed according to $E_t$, and the agent takes reward and updates weights of Q-network ($agent.Backward(r_t)$).
-The epoch of training session is set from the state when camera is repositioned to random, and reach the optimal transformation that sets error value to lower than $10.0$.
+In the training process, the camera position is initialized randomly where all four target feature points are visible. If the error value variation $E_t$ between $x_{t+1}$ and $x_t$ is less than $10.0$, the camera is repositioned according to the camera position initialization function. After $100$ experiences are stacked, the training starts. The agent takes the state $x_t$ and decides on the action according to the DQN network policy. As learning progresses, the exploration epsilon $\epsilon$ slightly decreases, and this value causes the agent to increasingly rely on the Q-network instead of random selection when choosing the action. We set the minimum $\epsilon_{min}$ to 0.005 and when (eq??), the learning task is done. Setting $\epsilon_{min}$ to zero can make our process easily fall into the local minima. Thus, we opted to use this value to choose a random action even when running a calibration task using the trained network. The camera performs the action specified by the agent ($camera.GoTo(a_t)$). The reward $r_t$ is fixed according to $E_t$, and the agent takes the reward and updates the weights of the Q-network ($agent.Backward(r_t)$).
+The epoch of the training session is set from the state when the camera is repositioned randomly until the optimal transformation that sets error values to less than $10.0$ is reached.
 
-\begin{equation}\label{ext}
+
+\begin{equation}\label{eq2}
   \epsilon \leq \epsilon_{min}
 \end{equation}
 
@@ -160,7 +160,7 @@ The epoch of training session is set from the state when camera is repositioned 
      \For {$t$ in $T$}
 
      \State $a_t$ =  argmax(Q(s, a;$\theta$))
-     \State camera.GoTo($a_t$)
+     \State $cam_{pos}$ = $cam_{pos}$ + $a_t$
      \State $E_t$ = Error($x_{t+1}$) - Error($x_t$)
      \If {E $\geq$ 0}
      \State $r_t$ = $1.0$
@@ -170,7 +170,7 @@ The epoch of training session is set from the state when camera is repositioned 
 
      agent.Backward($r_t$)
      \If{$r_t$ $leq$ 10.0}
-     camera.RandomPosition()
+     $cam_{pos}$ = $random$
      \EndIf
 
      \EndFor
@@ -180,21 +180,27 @@ The epoch of training session is set from the state when camera is repositioned 
 
 
 \section{Results}
-We have plotted results of time consumption of each epochs during training(Fig.\ref{fig3}, Fig.]), and after training(Fig.\ref{fig4}).
- Fig.\ref{fig5} shows that the error rate distribution of each epochs. Total 546 epochs were conducted to get the whole training done (??).
-\\In Fig. \ref{fig3}, it took 492.17 seconds to finish epoch 0. From second epoch, nothing exceeded 100.0 seconds to get the optimal state, and everything has been done within almost 10.0 seconds after epoch 76 (Fig. \ref{fig3}, (b)). Fig. \ref{fig4} (a) shows the distribution of optimization time of ### epochs using well-trained DQN model. It took average ### seconds to finish a single epoch starting from a random camera position. Each epoch's error rate variation is plotted on Fig. \ref{fig4} (b).
+The duration of each epoch during training is plotted on Fig. \ref{fig3}. A total of 545 epochs and 199,108 steps were conducted to complete the training, where equation \ref{eq2} was satisfied. The average Q-learning loss was 0.7580. Fig. \ref{fig3} (a) shows that it took 492.17 s to finish epoch 0. From the second epoch, nothing exceeded 100.0 s to reach the optimal state. From epoch 76, the simulator reached the optimal states within approximately 10.0 s (Fig. \ref{fig3}, (b)). Fig. \ref{fig4} (a) shows the optimization time distribution of 30 epochs using the well-trained DQN model. It took an average 2.28 s to finish a single epoch starting from a random camera position. Each epoch's error rate variation is plotted on Fig. \ref{fig4} (b).
+ Fig. \ref{fig5} shows the decreasing trend of the error rate in each epoch. As training progressed, the model not only reached its optimal state faster, but also showed less unnecessary movements, as seen in the error rate variation graphs that appeared softer in higher epochs.
 
 
 \begin{figure}[htb]
 \begin{center}
   \begin{tikzpicture}
-      \begin{axis}[width=0.5\columnwidth, at={(0.0\columnwidth, 0)}]
+      \begin{axis}[width=0.7\columnwidth, at={(0.0\columnwidth, 0)}, name = a,
+          x label style={ at={(ticklabel* cs:0.5)},anchor=east},
+          y label style={ at={(ticklabel* cs:0.5)},anchor=south},
+          xlabel={ epochs },
+          ylabel={ time ($seconds$) }]
           \addplot[red] table [x=episodes, y=time, col sep=comma] {data/progress.csv};
       \end{axis}
+      %subplot
+      \node[above] at (a.north) {(a)};
 
-      \begin{axis}[width=0.5\columnwidth, at={(0.5\columnwidth, 0)}]
+      \begin{axis}[width=0.5\columnwidth, at={(0.15\columnwidth, 2 cm)}, name = b]
           \addplot[only marks] table [x=episodes, y=time, col sep=comma] {data/progress2.csv};
       \end{axis}
+      \node[above] at (b.north) {(b) From epoch 78};
   \end{tikzpicture}
 \caption{Searching time during learning progress}
 \label{fig3}
@@ -204,14 +210,24 @@ We have plotted results of time consumption of each epochs during training(Fig.\
 \begin{figure}[htb]
 \begin{center}
   \begin{tikzpicture}
-      \begin{axis}[width=0.5\columnwidth, at={(0.0\columnwidth, 0)}]
+      \begin{axis}[width=0.5\columnwidth, at={(-0.1\columnwidth, 0)}, name = a,
+          x label style={ at={(ticklabel* cs:0.5)},anchor=east},
+          y label style={ at={(ticklabel* cs:0.5)},anchor=south},
+          xlabel={ $epochs$ },
+          ylabel={ time ($seconds$) }]
           \addplot[only marks] table [y=time, col sep=comma] {data/well-trained/progress.csv};
       \end{axis}
+      \node[above] at (a.north) {(a)};
 
-      \begin{axis}[width=0.5\columnwidth, at={(0.5\columnwidth, 0)}]
-        \foreach \i in {547,..., 559}
-          \addplot table [x=iterations, y=error, col sep=comma] {data/well-trained/out_\i.csv};
+      \begin{axis}[width=0.5\columnwidth, at={(0.5\columnwidth, 0)}, name = b,
+        x label style={ at={(ticklabel* cs:0.5)},anchor=east},
+        y label style={ at={(ticklabel* cs:0.5)},anchor=south},
+        xlabel={ iterations },
+        ylabel={ error rates }]
+        \foreach \i in {510,..., 540}
+          \addplot[red] table [x=iterations, y=error, col sep=comma] {data/well-trained/out_\i.csv};
       \end{axis}
+      \node[above] at (b.north) {(b)};
   \end{tikzpicture}
 \caption{Well-trained network calibration error variation}
 \label{fig4}
@@ -219,117 +235,115 @@ We have plotted results of time consumption of each epochs during training(Fig.\
 
 
 
-\newpage
 \def\ysep{5.0}
 \def\xsep{0.35}
+\def\wid{0.40\columnwidth}
 \begin{figure}[htb]
 \begin{center}
   \begin{tikzpicture}
-    \begin{axis}[width=0.4\columnwidth, at={(0.0, -0.0)}, name=graph1, ymax = 200]
+    \begin{axis}[width=\wid, at={(0.0, -0.0)}, name=graph1, ymax = 200]
         \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_0.csv};
     \end{axis}
 
-    \begin{axis}[width=0.4\columnwidth, at={(\xsep\columnwidth, -0.0)}, name=graph2, ymax = 200]
+    \begin{axis}[width=\wid, at={(\xsep\columnwidth, -0.0)}, name=graph2, ymax = 200]
       \foreach \i in {1,...,10}
         \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
     \end{axis}
 
-    \begin{axis}[width=0.4\columnwidth, at={(\xsep*2\columnwidth, -0.0)}, name=graph3, ymax = 200]
+    \begin{axis}[width=\wid, at={(\xsep*2\columnwidth, -0.0)}, name=graph3, ymax = 200]
       \foreach \i in {11,...,110}
         \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
     \end{axis}
 
 
 
-    \begin{axis}[width=0.4\columnwidth, at={(0.0\columnwidth, -\ysep cm)}, name=graph4, ymax = 200]
+    \begin{axis}[width=\wid, at={(0.0\columnwidth, -\ysep cm)}, name=graph4, ymax = 200]
       \foreach \i in {111,...,200}
         \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
     \end{axis}
+    %
+    %
+    % \begin{axis}[width=0.4\columnwidth, at={(\xsep\columnwidth, -\ysep cm)}, name=graph5, ymax = 200]
+    %   \foreach \i in {201,...,250}
+    %     \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
+    % \end{axis}
+    %
+    %
+    % \begin{axis}[width=0.4\columnwidth, at={(\xsep*2\columnwidth, -\ysep cm)}, name=graph6, ymax = 200]
+    %   \foreach \i in {251,...,300}
+    %     \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
+    % \end{axis}
+    %
+    %
+    %
+    %
+    % \begin{axis}[width=0.4\columnwidth, at={(0.0\columnwidth, -\ysep*2 cm)}, name=graph7, ymax = 200]
+    %   \foreach \i in {301,...,350}
+    %     \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
+    % \end{axis}
+    %
 
-
-    \begin{axis}[width=0.4\columnwidth, at={(\xsep\columnwidth, -\ysep cm)}, name=graph5, ymax = 200]
-      \foreach \i in {201,...,250}
-        \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
-    \end{axis}
-
-
-    \begin{axis}[width=0.4\columnwidth, at={(\xsep*2\columnwidth, -\ysep cm)}, name=graph6, ymax = 200]
-      \foreach \i in {251,...,300}
-        \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
-    \end{axis}
-
-
-
-
-    \begin{axis}[width=0.4\columnwidth, at={(0.0\columnwidth, -\ysep*2 cm)}, name=graph7, ymax = 200]
-      \foreach \i in {301,...,350}
-        \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
-    \end{axis}
-
-
-    \begin{axis}[width=0.4\columnwidth, at={(\xsep\columnwidth, -\ysep*2 cm)}, name=graph8, ymax = 200]
+    \begin{axis}[width=\wid, at={(\xsep\columnwidth, -\ysep cm)}, name=graph5, ymax = 200]
       \foreach \i in {351,...,400}
         \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
     \end{axis}
 
 
-    \begin{axis}[width=0.4\columnwidth, at={(\xsep*2\columnwidth, -\ysep*2 cm)}, name=graph9, ymax = 200]
-      \foreach \i in {401,...,450}
-        \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
-    \end{axis}
+    % \begin{axis}[width=0.4\columnwidth, at={(\xsep*2\columnwidth, -\ysep*2 cm)}, name=graph9, ymax = 200]
+    %   \foreach \i in {401,...,450}
+    %     \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
+    % \end{axis}
+    %
 
 
 
+    %
+    % \begin{axis}[width=0.4\columnwidth, at={(0.0\columnwidth, -\ysep*3 cm)}, name=graph10, ymax = 200]
+    %   \foreach \i in {451,...,500}
+    %     \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
+    % \end{axis}
+    %
+    %
+    % \begin{axis}[width=0.4\columnwidth, at={(\xsep\columnwidth, -\ysep*3 cm)}, name=graph11, ymax = 200]
+    %   \foreach \i in {501,...,540}
+    %     \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
+    % \end{axis}
 
 
-    \begin{axis}[width=0.4\columnwidth, at={(0.0\columnwidth, -\ysep*3 cm)}, name=graph10, ymax = 200]
-      \foreach \i in {451,...,500}
-        \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
-    \end{axis}
-
-
-    \begin{axis}[width=0.4\columnwidth, at={(\xsep\columnwidth, -\ysep*3 cm)}, name=graph11, ymax = 200]
-      \foreach \i in {501,...,540}
-        \addplot[blue] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
-    \end{axis}
-
-
-    \begin{axis}[width=0.4\columnwidth, at={(\xsep*2\columnwidth, -\ysep*3 cm)}, name=graph12, ymax = 200]
+    \begin{axis}[width=0.4\columnwidth, at={(\xsep*2\columnwidth, -\ysep cm)}, name=graph6, ymax = 200]
       \foreach \i in {541,...,545}
-        \addplot table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
+        \addplot[red] table [x=iterations, y=error, col sep=comma] {data/out_\i.csv};
     \end{axis}
 
 
     %Add Description
-    \foreach \l [count=\i] in {0,1-10,11-110,111-200,201-250,251-300,301-350, 351-400, 401-450, 451-500, 501-540, 541-545(last Epoch)}{
-      \node[above] at (graph\i.north) {Epoch \l};
-    }
+    \foreach \l [count=\i] in {0,1--10,11--110,111--200, 351--400, 541--545(last Epoch)}{
+      \node[above] at (graph\i.north) {Epoch \l};}
 
   \end{tikzpicture}
-\caption{Error rate variation}
+\caption{Error rate variation. Error rate(y-axis), and iterations(x-axis)}
 \label{fig5}
 \end{center}\end{figure}
-\newpage
 
 
 
 \section{Discussion}
- Our proposed DQN model is trained using 2D feature vector error as the environment $\varepsilon$, decided correct action $a$ for servoing virtual camera in 3D space. Under our DQN policy, the model became very dependent the Q-network deciding action after ??????? steps. From this point, the network is well-trained as far as possible, so further training is meaningless. This well-trained model can conduct registration from a random position to the optimal position within average of ??? seconds. The visualized camera moved smoothly with almost no unnecessary movement. Compare to conventional method, such as random tree searching algorithm or jacobian matrix estimation, our proposed method has several benefits. First, the amount of calculation is greatly reduced while conventional method requires large amount of computations. Both methods requires calculation of error varation in every timestep. Furthermore, jacobian matrix estimation method requires to calculate inverse (or pseudoinverse) matrix everytime. In random searching algorithm, such as simulated annealing can easily to fall into local minima, and also, there are too much unnecessary movement durign registration. The DQN method requires such calculation only when it is being trained. Once training task is done, this does not require any complex computation, and shows efficient servoing movement. Second, the proposed method is very easy to implement. Once the form of the network, environment, actions, rewards and some parameters are configured, no more difficult tasks are needed except waiting the agent to be trained.
+ Our proposed DQN model was trained using 2D feature vector error as the state $x$ and selected the correct action $a = argmax(Q(s,a;\theta))$ for the visual servoing camera in 3D space. Under our DQN policy, the model finished training after 545 epochs. The well-trained model can conduct registration from a random position to the optimal state within an average of 2.28 s. The visualized camera moved smoothly with almost no unnecessary movement. Compared to conventional methods such as random search tree algorithms or Jacobian matrix estimation, our proposed method has several advantages. First, the amount of calculations is greatly reduced. Both conventional methods require the calculation of error variations in every time step. Furthermore, the Jacobian matrix estimation method requires calculation of the inverse (or pseudoinverse) matrix every time. Random tree search algorithms such as simulated annealing can easily to fall into the local minima, and there are also excessive unnecessary movements during registration. The DQN method requires such calculations only during training. Once training is completed, it no longer requires complex computations and shows efficient servoing movement. Second, the proposed method is very easy to implement. Once the form of the network, environment, actions, rewards, and some parameters are configured, difficult tasks are eliminated except waiting for the agent to be trained.
 
- For now, there are several limitations that need to be improved. Firstly, Camera movement is somewhat inefficient like staircase. Because the direction and range in which camera can move is fixed in six actions. The jacobian matrix estimation method can put out all-round 3D translation and rotation vector, this method currently shows much smoother motion during registration. Since all the distance the camera move is $1$, it is also inefficient in terms of utilization of error sizes. Secondly, states $x_t$ is too simple to apply to real 2D-3D registrations. Our current method defined $x_t$ as four 2D point vector errors, but real 2D-3D registration, larger and much more complex features need to be used to define current state.
+ However, there are currently several limitations that need to be addressed. First, camera movement is somewhat inefficient because the direction and range of movement is fixed to six actions. The Jacobian matrix estimation method can generate an all-round 3D translation and rotation vector, and currently has much smoother motion during registration. Since all the distance the camera move is $1$, it is also inefficient in terms of utilization of error sizes. Second, state $x_t$ is too simple to apply to real 2D-3D registrations. Although our current method defined $x_t$ as four 2D point vector errors, real 2D-3D registration has larger and more complex features that need to be used to define current state.
 
-  Most of this limitations can soon be resolved in the future works. The camera movement problem can be solved by combining actions. Instead of choosing a single action predicted by $argmax(Q(s, a; \theta ))$, we can use the whole values in output layer of Q-network, and add the action vectors multiplied by the corresponding predicted reward values. This can give a much higher degree of freedom(DOF) to camera motion. Also, adding rotation action is necessary to perform complicated 2D-3D registration. More sophisticated form of stats $x$ can also be easily defined. This is the greatest potential and advantage of using DQN rather then other methods; Comparing jacobian matrix estimation method, as the feature of input state gets more complicated, the computation and complexity for deciding proper action gets exponentially more difficult.
-  This method can use CNN that can self-study the feature information of input images, this method is extreamly easy to implement, and also, can expect good results. There already are many DQN methods succesfully applied to play games that uses rendered game images as input state, deep CNN as its Q-networks\cite{ref2}. Setting stochastic reward can also efficiently utilizes the size of error variation, and reduces registraiton time. To sum it up, our future DQN model uses deep CNN for its value network. takes rendered image of each timestep as input state, predicts actions, and perform registration by combining whole output Q-network layer.
+  Most of these limitations can be resolved in the future works. The camera movement problem can be solved by combining actions. Instead of choosing a single action predicted by $argmax(Q(s, a; \theta ))$, we can use the whole values in the output layer of the Q-network, and add the action vectors multiplied by the corresponding predicted reward values. This can provide a higher degree of freedom to camera motion. The addition of rotational action is also necessary to perform complicated 2D-3D registration. A more sophisticated form of state $x$ can also be easily defined. This is the greatest advantage of using DQN rather than other methods. Compared to the Jacobian matrix estimation method, as the features of the input state become more complicated, the computation and complexity of deciding the proper action becomes exponentially more difficult.
+  This method can use a convolutional neural network (CNN) that can self-study the feature information of input images. This method is also extremely easy to implement and can provide good results. Many DQN methods have been successfully applied to playing games that use rendered game images as the input state and deep CNN as its Q-networks\cite{ref2}. Setting stochastic rewards can also efficiently utilize the size of error variations, and reduce registration time. To summarize, our future DQN model uses a deep CNN for its value network. It takes the rendered image of each time step as the input state, predicts actions, and performs registration by combining the whole output Q-network layer. The reward for this registration method could be the root mean square error between the pre-defined optimal transformation and current transformation. This model is expected to perform very well compared to most conventional methods using rigid single-view 2D-3D registration
 
 
 
 \section{Conclusion}
 
-We have proposed and developed a DQN method for 2D-3D registartion. This method is succesfuly applied to optimize and solve the point-based visual servoing simulator. Since this simulator takes 2D feature states to perform in 3D, this basically can be regarded as very simplified 2D-3D registration simulator. Although this is simplified problem, the proposed approach has its strength in terms of solving similar but more complex problems compare to conventional registration methods; For example, jacobian matrix estimation method requires exponential computation and high difficulty as the problem becomes more complicated. Also, most of searching algorithm such as simulated annealing, heel climbing methods for optimizing 2D-3D registration requires to calculate the similarity of two states, and the complexity of two states gets higher, the amount of computation also gets larger. While the well-trained DQN model only forwards input states to the network to find proper actions. Thanks to this very powerful strengths we can expect to resolve most of limitations in the near future, and apply this apporoach to the higher-order 2D-3D registration problems.
+We have proposed and developed a DQN method for 2D-3D registration. This method was successfully applied to optimize and solve a point-based visual servoing simulator. Since this simulator takes 2D feature states to perform in 3D, it can be regarded as a very simplified 2D-3D registration simulator. Although this is a simplified problem, the strength of the proposed approach is its ability to solve similar but more complex problems compared to conventional registration methods. For example, the Jacobian matrix estimation method requires exponential computations and high difficulty as the problem becomes more complicated. Most search algorithms such as simulated annealing and heel climbing methods for optimizing 2D-3D registration require calculation of the similarity between two states. As the complexity of two states increases, the amount of computations also increases. Although the well-trained DQN model only forwards input states to the network to determine proper actions, its inherent advantages will enable the resolution of most limitations in the near future, when this approach is applied to higher-order 2D-3D registration problems.
 
 
 \section*{Acknowledgement}
-This research was supported by the KIST institutional program (??????, ???????).
+This research was supported by the KIST institutional program (2E26880, 2V05430).
 
 
 \newpage
